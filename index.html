@@ -1,0 +1,1871 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#140C24">
+<meta name="description" content="폰을 두 사람 사이에 놓고 하는 1대1 인디언 포커 장부">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="인디언 포커">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+</style>
+<title>인디언 포커 장부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Jua&display=swap">
+<style>
+/* Layout: the whole phone screen is a night-violet card table lying between two players. Each end has a small seat HUD (top one rotated 180°); the pot pile of chip towers sits in the middle with mirrored labels. On a player's turn a translucent hologram panel rises from their end of the table. Setup is a normal scrolling page. */
+:root {
+  --bg: #FBF3F8;
+  --surface: #FFFFFF;
+  --surface-2: #F4EAF6;
+  --ink: #2B1D33;
+  --muted: #7A6683;
+  --line: #ECDDEE;
+  --accent: #C2417F;
+  --pink: #F58EC0;
+  --pink-soft: #FCDDEC;
+  --on-pink: #3A1029;
+  --lav: #BCA6F0;
+  --lav-soft: #E6DCFB;
+  --win: #2E8A6B;
+  --danger: #C8344F;
+  --on-danger: #FFFFFF;
+  --focus: #7C4DDB;
+  --shadow: rgba(120, 70, 140, .16);
+  --scrim: rgba(43, 29, 51, .5);
+  /* the game board keeps one night-table look in both themes */
+  --b-bg: #140C24;
+  --b-felt-1: #4A3274;
+  --b-felt-2: #2F1F50;
+  --b-felt-3: #1D1234;
+  --b-ink: #FFF2FB;
+  --b-muted: #CDB7EC;
+  --b-pink: #FF8FC6;
+  --b-pink-hi: #FFD3EA;
+  --b-glow: rgba(255, 120, 190, .55);
+  --b-lav: #B9A2FF;
+  --b-red: #FF7A98;
+  --b-mint: #9FF0CF;
+  --b-line: rgba(200, 170, 255, .35);
+  --b-glass: rgba(30, 16, 56, .6);
+  --b-card: #FFF7FC;
+  --chip-a: #F06FAE; --chip-a-edge: #A93A76;
+  --chip-b: #A98BEA; --chip-b-edge: #6A4FB0;
+  --chip-c: #FFB3D4; --chip-c-edge: #CB7AA0;
+  --chip-d: #7E5BD6; --chip-d-edge: #4B3192;
+  --font-display: "Jua", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A1320; --surface: #241A2C; --surface-2: #2F2339; --ink: #F7ECF6; --muted: #BBA6C6; --line: #3A2C45;
+    --accent: #FF8EC2; --pink: #F58EC0; --pink-soft: #4A2840; --on-pink: #3A1029; --lav: #BCA6F0; --lav-soft: #3B2E5C;
+    --win: #72D4AF; --danger: #FF7D93; --on-danger: #2A0C14; --focus: #C3A8FF; --shadow: rgba(0, 0, 0, .35); --scrim: rgba(8, 4, 12, .65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A1320; --surface: #241A2C; --surface-2: #2F2339; --ink: #F7ECF6; --muted: #BBA6C6; --line: #3A2C45;
+  --accent: #FF8EC2; --pink: #F58EC0; --pink-soft: #4A2840; --on-pink: #3A1029; --lav: #BCA6F0; --lav-soft: #3B2E5C;
+  --win: #72D4AF; --danger: #FF7D93; --on-danger: #2A0C14; --focus: #C3A8FF; --shadow: rgba(0, 0, 0, .35); --scrim: rgba(8, 4, 12, .65);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+.app { max-width: 520px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 40px; display: grid; gap: 14px; }
+.top:empty { display: none; }
+html.table-mode, html.table-mode body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.table-mode body { background: var(--b-bg); }
+html.table-mode .app { height: 100%; padding: 0; display: block; }
+html.table-mode main { height: 100%; }
+
+button { font: inherit; cursor: pointer; color: inherit; touch-action: manipulation; }
+button:disabled { cursor: not-allowed; opacity: .38; }
+:focus-visible { outline: 2.5px solid var(--focus); outline-offset: 2px; }
+input, textarea { font: inherit; color: var(--ink); }
+
+/* setup page */
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark { flex: none; width: 26px; height: 36px; border-radius: 6px; background: var(--surface); border: 2px solid var(--pink); display: grid; place-items: center; font-family: var(--font-display); font-size: 17px; color: var(--accent); rotate: -8deg; box-shadow: 3px 3px 0 var(--lav); }
+.brand h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 23px; line-height: 1.15; }
+.brand p { margin: 1px 0 0; color: var(--muted); font-size: 12.5px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14px; }
+.btn-primary { background: var(--pink); border-color: var(--pink); color: var(--on-pink); }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: var(--on-danger); }
+.btn-big { width: 100%; min-height: 56px; border-radius: 18px; font-size: 17px; font-weight: 700; box-shadow: 0 4px 14px var(--shadow); }
+.setup { display: grid; gap: 14px; }
+.setup-intro h2 { margin: 0 0 2px; font-family: var(--font-display); font-weight: 400; font-size: 21px; }
+.setup-intro p { margin: 0; color: var(--muted); font-size: 14px; }
+.group-title { margin: 0; font-size: 15px; font-weight: 700; }
+.phone-map { display: grid; gap: 8px; }
+.seat-in { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 10px; }
+.seat-in label { font-size: 13px; font-weight: 700; color: var(--muted); line-height: 1.3; }
+.seat-in label b { display: block; color: var(--accent); font-size: 14px; }
+.mini-phone { justify-self: center; width: 64px; height: 96px; border-radius: 12px; border: 2px solid var(--line); background: #2F1F50; display: grid; grid-template-rows: auto 1fr auto; padding: 5px; gap: 3px; }
+.mini-phone span { border-radius: 5px; background: rgba(255, 255, 255, .14); display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #FFE3F2; padding: 1px 0; }
+.mini-phone span:first-child { rotate: 180deg; }
+.mini-phone i { border-radius: 50%; margin: 6px 8px; background: radial-gradient(circle, #F06FAE 0 30%, transparent 32%), #4A3274; }
+.text-in { min-height: 48px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); width: 100%; min-width: 0; font-size: 16px; }
+.text-in:focus { border-color: var(--pink); }
+.field { display: grid; gap: 4px; min-width: 0; }
+.rules .field + .field { padding-top: 12px; border-top: 1px dashed var(--line); }
+.field-label { font-weight: 600; font-size: 14px; }
+.field-input { display: flex; align-items: center; gap: 8px; }
+.field-input .text-in { text-align: right; font-variant-numeric: tabular-nums; }
+.unit { color: var(--muted); }
+.field-read { font-size: 13px; color: var(--accent); font-weight: 600; }
+.hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.seg label { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; font-size: 14px; }
+.seg label:has(input:checked) { border-color: var(--pink); background: var(--pink-soft); }
+.seg input { accent-color: var(--accent); margin: 0; width: 18px; height: 18px; }
+.error { margin: 0; color: var(--danger); font-weight: 600; font-size: 14px; }
+
+/* ---------- board ---------- */
+.board { position: relative; height: 100%; overflow: hidden; background: var(--b-bg); color: var(--b-ink); color-scheme: dark; --hud-h: 66px; --ph: clamp(140px, 26%, 240px); }
+.felt { position: absolute; inset: 6px; z-index: 0; border-radius: 46px;
+  background: radial-gradient(ellipse 75% 38% at 50% 50%, rgba(255, 130, 200, .2), transparent 70%), radial-gradient(ellipse at 50% 50%, var(--b-felt-1) 0%, var(--b-felt-2) 55%, var(--b-felt-3) 100%);
+  box-shadow: inset 0 0 0 2px rgba(255, 150, 210, .5), inset 0 0 0 9px #22163C, inset 0 0 0 10.5px rgba(190, 160, 255, .4), inset 0 0 70px rgba(0, 0, 0, .55); }
+.felt::before { content: ""; position: absolute; left: 6%; right: 6%; top: 50%; height: calc(var(--ph) + 120px); translate: 0 -50%; border-radius: 50%; border: 1.5px dashed rgba(255, 170, 220, .28); pointer-events: none; }
+/* 판돈 금액은 칩 그림(z 10) 위에 떠요 */
+.p-label { position: absolute; left: 50%; z-index: 12; display: grid; justify-items: center; text-align: center; white-space: nowrap; translate: -50% 0; padding: 3px 16px 5px; border-radius: 18px; background: rgba(20, 10, 38, .6); border: 1px solid rgba(255, 160, 215, .38); box-shadow: 0 0 18px rgba(255, 120, 190, .22); pointer-events: none; }
+.p-label.top { bottom: calc(50% + var(--ph) / 2 + 8px); rotate: 180deg; }
+.p-label.bot { top: calc(50% + var(--ph) / 2 + 8px); }
+.p-eye { font-size: 11px; letter-spacing: .08em; color: var(--b-muted); font-weight: 700; }
+.p-amt { font-family: var(--font-display); font-weight: 400; font-size: clamp(24px, 7.6vw, 34px); line-height: 1.15; color: var(--b-pink-hi); text-shadow: 0 0 10px rgba(255, 110, 185, .85), 0 0 26px rgba(255, 110, 185, .45); }
+.p-meta { font-size: 11px; color: var(--b-muted); }
+
+
+.hud { position: absolute; left: 14px; right: 14px; z-index: 30; height: var(--hud-h); display: flex; align-items: center; gap: 10px; padding: 0 10px 0 12px; border-radius: 20px; background: var(--b-glass); border: 1px solid var(--b-line); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.hud.bottom { bottom: 14px; }
+.hud.top { top: 14px; rotate: 180deg; }
+.hud.is-turn { border-color: var(--b-pink); box-shadow: 0 0 0 1px var(--b-pink), 0 0 22px var(--b-glow); }
+.brow-card { flex: none; width: 30px; height: 42px; border-radius: 6px; background: var(--b-card); border: 2px solid var(--b-pink); color: #C2417F; display: grid; place-items: center; font-family: var(--font-display); font-size: 18px; rotate: -6deg; box-shadow: 2px 2px 0 var(--b-lav); }
+.brow-card.shown { color: #2B1D33; }
+.hud-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.hud-name { display: flex; align-items: center; gap: 5px; min-width: 0; font-family: var(--font-display); font-size: 17px; line-height: 1.2; }
+.hud-name .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+.hud-bal { font-family: var(--font-display); font-size: clamp(17px, 5.4vw, 22px); line-height: 1.15; color: #fff; }
+.hud-sub { font-size: 11.5px; color: var(--b-muted); }
+.hud-tools { display: flex; gap: 6px; }
+.hud-tools button { width: 40px; height: 40px; padding: 0; border-radius: 13px; border: 1px solid var(--b-line); background: rgba(255, 255, 255, .06); color: var(--b-ink); display: grid; place-items: center; }
+.hud-tools svg { width: 20px; height: 20px; }
+.tag { flex: none; font-family: var(--font-body); font-size: 10.5px; font-weight: 700; line-height: 17px; padding: 0 7px; border-radius: 999px; background: rgba(185, 162, 255, .28); color: var(--b-ink); }
+.tag-turn { background: var(--b-pink); color: #3A1029; }
+
+.beam { position: absolute; left: 20%; right: 20%; z-index: 15; height: 170px; pointer-events: none; background: linear-gradient(to top, rgba(255, 143, 198, .55), rgba(185, 162, 255, .14) 60%, transparent); clip-path: polygon(38% 100%, 62% 100%, 100% 0, 0 0); filter: blur(4px); }
+.beam.bottom { bottom: calc(var(--hud-h) + 8px); }
+.beam.top { top: calc(var(--hud-h) + 8px); rotate: 180deg; }
+
+.holo-slot { position: absolute; left: 14px; right: 14px; z-index: 20; max-height: calc(100% - var(--hud-h) * 2 - 70px); display: flex; flex-direction: column; }
+.holo-slot.bottom { bottom: calc(var(--hud-h) + 26px); }
+/* 뒤집기는 틀(가운데 기준)이, 기울이기는 패널(내 쪽 끝 기준)이 맡아요 */
+.holo-slot.top { top: calc(var(--hud-h) + 26px); rotate: 180deg; }
+.holo { position: relative; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 9px; padding: 14px; border-radius: 22px; color: var(--b-ink);
+  background: linear-gradient(160deg, rgba(255, 150, 210, .22), rgba(150, 120, 255, .12) 55%, rgba(255, 255, 255, .04)), rgba(28, 14, 52, .52);
+  border: 1px solid rgba(255, 170, 220, .7);
+  box-shadow: 0 0 0 1px rgba(190, 160, 255, .25), 0 0 30px rgba(255, 130, 200, .38), 0 20px 40px rgba(5, 0, 20, .5), inset 0 0 30px rgba(190, 160, 255, .22);
+  -webkit-backdrop-filter: blur(9px) saturate(140%); backdrop-filter: blur(9px) saturate(140%);
+  transform: perspective(1000px) rotateX(9deg); transform-origin: 50% 100%; }
+.holo::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .05) 0 1px, transparent 1px 4px); animation: scan 7s linear infinite; }
+.holo::after { content: ""; position: absolute; left: 12%; right: 12%; top: -1px; height: 2px; border-radius: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--b-pink-hi), transparent); box-shadow: 0 0 12px var(--b-pink); }
+.holo > * { position: relative; z-index: 1; }
+.holo.enter { animation: holo-in .6s cubic-bezier(.2, .9, .25, 1) both; }
+@keyframes scan { to { background-position: 0 160px; } }
+@keyframes holo-in {
+  0% { opacity: 0; transform: perspective(1000px) rotateX(75deg) scaleY(.15); filter: blur(6px) brightness(2.2); }
+  40% { opacity: .9; filter: blur(1px) brightness(1.6); }
+  55% { opacity: .4; }
+  70% { opacity: 1; filter: brightness(1.25); }
+  100% { opacity: 1; transform: perspective(1000px) rotateX(9deg) scaleY(1); filter: none; }
+}
+.h-eye { font-size: 11.5px; letter-spacing: .1em; font-weight: 700; color: #FFB8DD; text-shadow: 0 0 8px rgba(255, 120, 190, .7); }
+.h-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.h-pot { font-size: 12px; color: var(--b-muted); white-space: nowrap; }
+.h-pot b { font-family: var(--font-display); font-weight: 400; font-size: 17px; color: var(--b-pink-hi); text-shadow: 0 0 8px rgba(255, 120, 190, .7); }
+.h-say { margin: 0; font-size: 14px; line-height: 1.5; color: var(--b-muted); }
+.h-say b { color: var(--b-pink-hi); }
+.h-hint { margin: 0; font-size: 12px; color: var(--b-muted); }
+.h-hint b { color: var(--b-pink-hi); }
+.hacts { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 8px; }
+.hacts.two { grid-template-columns: 1fr 1fr; }
+.hacts.one { grid-template-columns: 1fr; }
+.act { display: grid; align-content: center; justify-items: center; gap: 2px; min-height: 64px; padding: 8px; border-radius: 15px; border: 1px solid var(--b-line); text-align: center; color: var(--b-ink); background: rgba(255, 255, 255, .06); transition: transform .08s, filter .15s; }
+.act b { font-size: 16.5px; font-weight: 700; line-height: 1.2; }
+.act small { font-size: 11.5px; line-height: 1.3; opacity: .88; }
+.act:active:not(:disabled) { transform: scale(.95); filter: brightness(1.5); }
+.act:disabled { box-shadow: none; }
+.act-call { border-color: rgba(255, 150, 205, .95); background: linear-gradient(180deg, rgba(255, 120, 190, .42), rgba(255, 120, 190, .16)); box-shadow: 0 0 16px rgba(255, 120, 190, .5), inset 0 0 12px rgba(255, 170, 220, .35); text-shadow: 0 0 8px rgba(255, 120, 190, .9); }
+.act-raise { border-color: rgba(195, 170, 255, .95); background: linear-gradient(180deg, rgba(170, 140, 255, .4), rgba(170, 140, 255, .14)); box-shadow: 0 0 16px rgba(170, 140, 255, .5), inset 0 0 12px rgba(205, 185, 255, .3); text-shadow: 0 0 8px rgba(170, 140, 255, .9); }
+.act-fold { border-color: rgba(255, 115, 145, .9); background: rgba(255, 90, 130, .12); color: #FFD0DA; box-shadow: 0 0 12px rgba(255, 90, 130, .3); }
+.act-allin { border-color: var(--b-pink-hi); background: linear-gradient(90deg, rgba(255, 120, 190, .32), rgba(170, 140, 255, .32)); box-shadow: 0 0 18px rgba(255, 140, 210, .45); }
+.act-quiet { border-color: rgba(220, 200, 255, .45); }
+
+.rp-top { display: flex; align-items: center; gap: 8px; }
+.rp-top .h-eye { margin-right: auto; }
+.hsmall { min-height: 34px; padding: 0 11px; border-radius: 10px; border: 1px solid var(--b-line); background: rgba(255, 255, 255, .06); color: var(--b-ink); font-size: 13px; font-weight: 600; }
+.modes { display: flex; gap: 2px; padding: 2px; border-radius: 11px; background: rgba(255, 255, 255, .06); border: 1px solid var(--b-line); }
+.modes button { min-height: 30px; padding: 0 10px; border: 0; border-radius: 9px; background: transparent; color: var(--b-muted); font-size: 12.5px; font-weight: 600; }
+.modes button[aria-pressed="true"] { background: rgba(255, 143, 198, .32); color: #fff; box-shadow: 0 0 8px rgba(255, 120, 190, .5); }
+.rp-amt { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 14px; border: 1px solid rgba(255, 170, 220, .55); background: rgba(10, 4, 24, .38); }
+.rp-amt.bad { border-color: var(--b-red); }
+.rp-num { margin-left: auto; min-width: 0; display: flex; align-items: baseline; gap: 4px; padding-right: 8px; font-family: var(--font-display); font-size: 18px; color: #FFB8DD; }
+.rp-num output { font-size: 30px; line-height: 1.25; color: #fff; text-shadow: 0 0 12px rgba(255, 120, 190, .8); overflow-wrap: anywhere; }
+.rp-read { font-size: 12px; color: var(--b-muted); text-align: right; }
+.rp-read.bad { color: var(--b-red); font-weight: 600; }
+.denoms, .keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.denom { --d: #D9CFE6; min-height: 40px; padding: 0 2px; border: 1.5px solid var(--d); border-radius: 9px; background: rgba(255, 255, 255, .07); color: var(--b-ink); font-weight: 700; font-size: 13.5px; box-shadow: 0 0 8px color-mix(in srgb, var(--d) 45%, transparent), inset 0 0 8px color-mix(in srgb, var(--d) 30%, transparent); }
+.denom.coin { border-radius: 999px; }
+.denom.note { --d: #FF9ACB; }
+.denom.cheque { --d: #B9A2FF; border-style: dashed; border-radius: 4px; }
+.key { min-height: 40px; border-radius: 11px; border: 1px solid var(--b-line); background: rgba(255, 255, 255, .06); color: var(--b-ink); font-family: var(--font-display); font-size: 20px; }
+.key.fn { background: rgba(185, 162, 255, .18); font-size: 17px; }
+
+.cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cardbtn { min-height: 46px; padding: 0; border-radius: 11px; border: 1px solid var(--b-line); background: rgba(255, 255, 255, .06); color: var(--b-ink); font-family: var(--font-display); font-size: 21px; }
+.cardbtn.ten { color: #FFB8DD; }
+.cardbtn[aria-checked="true"] { background: rgba(255, 143, 198, .55); border-color: var(--b-pink-hi); color: #fff; box-shadow: 0 0 16px rgba(255, 120, 190, .7); }
+
+.res { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 10px; }
+.res-big { font-family: var(--font-display); font-size: 32px; line-height: 1.1; }
+.res.is-win .res-big { color: var(--b-pink-hi); text-shadow: 0 0 14px rgba(255, 110, 185, .9); }
+.res-net { font-family: var(--font-display); font-size: 22px; text-align: right; }
+.res-net.up { color: var(--b-mint); }
+.res-net.down { color: var(--b-red); }
+.res-sub { grid-column: 1 / -1; font-size: 12.5px; color: var(--b-muted); }
+
+/* effects layer */
+/* 칩은 캔버스 하나에 물리로 그려요: 테이블(.felt) 위, 판돈 글자·홀로그램·자리 표시줄 아래 */
+#chips { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; display: none; }
+html.table-mode #chips { display: block; }
+#fx { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.shock { position: fixed; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 2px solid rgba(255, 185, 225, .95); box-shadow: 0 0 22px rgba(255, 120, 190, .9), inset 0 0 14px rgba(255, 120, 190, .7); }
+.callout { position: fixed; z-index: 70; font-family: var(--font-display); font-size: 28px; color: #FFE6F3; white-space: nowrap; text-shadow: 0 0 10px #FF6FB5, 0 0 26px rgba(255, 111, 181, .7); }
+.callout.big { font-size: 42px; color: #fff; }
+.flash { position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(255, 120, 190, .55), transparent 65%); }
+.ripple { position: fixed; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 2px solid rgba(255, 205, 235, .95); box-shadow: 0 0 14px rgba(255, 120, 190, .9); }
+
+/* menu sheet (follows the viewer's theme) */
+.sheet-back { position: fixed; inset: 0; z-index: 30; background: var(--scrim); }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 520px; max-height: 88%; margin: 0 auto; display: flex; flex-direction: column; border-radius: 24px 24px 0 0; background: var(--bg); color: var(--ink); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -8px 30px var(--shadow); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 8px; }
+.sheet-head h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 21px; }
+.sheet-body { overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 20px; display: grid; gap: 12px; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.confirm { display: grid; gap: 10px; padding: 12px; border-radius: 14px; border: 1.5px solid var(--danger); }
+.confirm p { margin: 0; font-size: 14px; }
+
+/* panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel h2 { margin: 0; font-size: 15px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.h-meta { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.mini { min-height: 34px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 600; }
+
+/* guide */
+.guide { gap: 0; padding: 0; }
+.guide > summary { display: flex; align-items: center; gap: 10px; padding: 16px; cursor: pointer; list-style: none; }
+.guide > summary::-webkit-details-marker { display: none; }
+.sum-text { display: grid; gap: 1px; margin-right: auto; }
+.sum-text b { font-size: 15px; }
+.sum-text span { font-size: 12.5px; color: var(--muted); }
+.chev { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--pink-soft); color: var(--accent); display: grid; place-items: center; transition: transform .2s; }
+.chev svg { width: 14px; height: 14px; }
+.guide[open] .chev { transform: rotate(180deg); }
+.guide-body { display: grid; gap: 22px; padding: 0 16px 18px; }
+.guide h3 { margin: 0 0 10px; font-size: 12.5px; letter-spacing: .04em; color: var(--accent); font-weight: 700; }
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: 12px; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
+.steps li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--lav-soft); color: var(--ink); font-weight: 700; font-size: 12.5px; }
+.steps li.is-now::before { background: var(--pink); color: var(--on-pink); }
+.step-title { font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.step-body { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+.steps li.is-now .step-body { color: var(--ink); }
+.now-chip { font-size: 10.5px; font-weight: 700; line-height: 17px; padding: 0 7px; border-radius: 999px; background: var(--pink); color: var(--on-pink); }
+.terms { margin: 0; display: grid; grid-template-columns: 4.4em minmax(0, 1fr); gap: 8px 12px; font-size: 14px; }
+.terms dt { font-weight: 700; }
+.terms dd { margin: 0; color: var(--muted); }
+.example { background: var(--bg); border-radius: 16px; padding: 14px; display: grid; gap: 8px; font-size: 14px; }
+.example p { margin: 0; }
+.example ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+.ex-card { display: inline-grid; place-items: center; width: 20px; height: 28px; margin: 0 2px; border-radius: 4px; background: var(--surface); border: 1.5px solid var(--pink); font-family: var(--font-display); font-size: 13px; vertical-align: middle; }
+.odds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 10px 0; }
+.odds div { display: grid; justify-items: center; gap: 1px; padding: 7px 0; border-radius: 10px; background: var(--surface-2); }
+.o-card { font-family: var(--font-display); font-size: 17px; }
+.o-pct { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tip, .note { margin: 0; font-size: 13.5px; }
+.note { color: var(--muted); }
+
+/* settlement + log */
+.tx-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; padding: 14px 16px; background: var(--pink-soft); border-radius: 16px; }
+.tx-from, .tx-to { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
+.tx-arrow { color: var(--accent); }
+.tx-amt { margin-left: auto; font-family: var(--font-display); font-size: 23px; color: var(--accent); }
+.nets { list-style: none; margin: 0; padding: 0; display: grid; }
+.nets li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; padding: 9px 0; border-top: 1px dashed var(--line); }
+.nets li:first-child { border-top: 0; }
+.n-name { font-weight: 700; }
+.n-detail { grid-column: 1; font-size: 12.5px; color: var(--muted); }
+.n-net { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-family: var(--font-display); font-size: 18px; text-align: right; }
+.up { color: var(--win); }
+.down { color: var(--danger); }
+.empty { margin: 0; font-size: 14px; color: var(--muted); }
+.fine { margin: 0; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12.5px; color: var(--muted); }
+textarea { width: 100%; font-size: 16px; background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px; resize: vertical; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; max-height: 260px; overflow-y: auto; font-size: 13px; }
+.log li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; padding: 3px 0; }
+.log li.new-hand { border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 5px; }
+.log li.new-hand:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.log-h { color: var(--accent); font-weight: 600; font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top" id="top"></header>
+  <main id="main"></main>
+</div>
+<canvas id="chips" aria-hidden="true"></canvas>
+<div id="fx" aria-hidden="true"></div>
+
+<script>
+(() => {
+  'use strict';
+  const KEY = 'indian-poker-1v1-v1';
+  const PREF_KEY = 'indian-poker-guide-open';
+  const PAD_KEY = 'indian-poker-pad-mode';
+  // 돈 버튼: 기본 베팅 근처 단위 4개 + 100만·1000만·1억은 항상
+  const LADDER = [100, 500, 1000, 5000, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9];
+  const BIG = [1000000, 10000000, 100000000];
+  const PILE_CAP = 144;
+  const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const denomShape = d => d < 1000 ? 'coin' : d <= 50000 ? 'note' : 'cheque';
+
+  const fmt = n => Math.round(n).toLocaleString('ko-KR');
+  const won = n => fmt(n) + '원';
+  const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n)) + '원';
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toInt = v => Math.max(0, Math.floor(Number(v) || 0));
+  // 60000000 -> "6,000만원", 9960000000 -> "99억 6,000만원"
+  function shortWon(n) {
+    n = Math.round(Math.abs(n));
+    if (n < 10000) return fmt(n) + '원';
+    const eok = Math.floor(n / 1e8), man = Math.floor((n % 1e8) / 1e4), rest = n % 1e4;
+    const parts = [];
+    if (eok) parts.push(fmt(eok) + '억');
+    if (man) parts.push(fmt(man) + '만');
+    if (rest) parts.push(fmt(rest));
+    return parts.join(' ') + '원';
+  }
+
+  // 받침 따라 조사 붙이기: josa('호준', '이', '가') -> '호준이'
+  function josa(word, withFinal, withoutFinal) {
+    const w = String(word);
+    const ch = w.trim().slice(-1);
+    const code = ch.charCodeAt(0);
+    let has;
+    if (code >= 0xAC00 && code <= 0xD7A3) has = (code - 0xAC00) % 28 !== 0;
+    else if (/[0-9]/.test(ch)) has = '013678'.includes(ch);
+    else return `${w}${withFinal}(${withoutFinal})`;
+    return w + (has ? withFinal : withoutFinal);
+  }
+  const iga = w => josa(w, '이', '가');
+  const eunNeun = w => josa(w, '은', '는');
+  const eulReul = w => josa(w, '을', '를');
+
+  // 15500 -> "1만 5천 5백 원"
+  function hangulWon(n) {
+    n = toInt(n);
+    if (!n) return '0원';
+    const parts = [];
+    const eok = Math.floor(n / 1e8);
+    const man = Math.floor((n % 1e8) / 1e4);
+    const cheon = Math.floor((n % 1e4) / 1000);
+    const baek = Math.floor((n % 1000) / 100);
+    const rest = n % 100;
+    if (eok) parts.push(eok + '억');
+    if (man) parts.push(fmt(man) + '만');
+    if (cheon) parts.push(cheon + '천');
+    if (baek) parts.push(baek + '백');
+    if (rest) parts.push(String(rest));
+    return parts.join(' ') + ' 원';
+  }
+  const denomLabel = d => d >= 1e8 ? `+${d / 1e8}억` : d >= 1e4 ? `+${d / 1e4}만` : d >= 1000 ? `+${d / 1000}천` : `+${d}`;
+
+  // ---- state ----
+  const defaultDraft = () => ({ names: ['호준', '다인'], buyIn: 10000, ante: 500, penalty: 5000, penaltyTouched: false, tie: 'carry', error: '' });
+  // 예전 기본 이름(민준·서연)이 브라우저에 저장돼 있으면 새 기본 이름으로 바꿔요
+  const freshNames = names => (Array.isArray(names) && names[0] === '민준' && names[1] === '서연') ? defaultDraft().names : names;
+  const freshUi = () => ({ mode: 'main', raise: 0, turnKey: '', keyFresh: true, cards: {}, menu: false, confirmReset: false, copied: false, copyFallback: false });
+  const blankState = () => ({ v: 2, phase: 'setup', settings: null, players: [], hand: 0, first: 1, turn: -1, currentBet: 0, minRaise: 0, carry: 0, betMade: false, lastAct: ['', ''], log: [], result: null });
+
+  let state = blankState();
+  let undoStack = [];
+  let draft = defaultDraft();
+  let ui = freshUi();
+  let guideOpen = false;
+  let padMode = 'quick';
+  let pendingFx = null;
+  let resolveTimer = null;
+  let shownPot = null;
+  const lastHolo = ['', ''];
+  try {
+    const g = localStorage.getItem(PREF_KEY); if (g !== null) guideOpen = g === '1';
+    const m = localStorage.getItem(PAD_KEY); if (m === 'keys' || m === 'quick') padMode = m;
+  } catch (e) { /* storage unavailable */ }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ state, undo: undoStack.slice(-40), draft })); } catch (e) { /* storage unavailable */ }
+  }
+  function load() {
+    try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function pushUndo() {
+    undoStack.push(JSON.stringify(state));
+    if (undoStack.length > 60) undoStack.shift();
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    clearTimeout(resolveTimer);
+    state = JSON.parse(undoStack.pop());
+    if (!state.lastAct) state.lastAct = ['', ''];
+    ui = freshUi();
+    pendingFx = () => world.sync(chipsFor(potTotal()), true);
+    save(); render();
+  }
+  function addLog(t) {
+    state.log.push({ h: state.hand, t });
+    if (state.log.length > 500) state.log.splice(0, state.log.length - 500);
+  }
+
+  const cur = () => state.players[state.turn];
+  const other = () => state.players[1 - state.turn];
+  const potTotal = () => state.players[0].bet + state.players[1].bet + state.carry;
+  const toCallOf = p => state.currentBet - p.bet;
+  // 1대1에서는 상대가 가진 돈보다 더 걸 수 없어요
+  const maxRaiseOf = (p, o) => Math.max(0, Math.min(p.balance - toCallOf(p), o.balance));
+  const effAnte = () => Math.min(state.settings.ante, state.players[0].balance, state.players[1].balance);
+
+  // 칩 개수: 기본 베팅 기준으로 금액이 커질수록 계속 늘어나요 (기본 베팅 2개 ≈ 4개, 20개 ≈ 17개, 100개 ≈ 45개, 최대 144개)
+  const chipUnit = () => Math.max(1, state.settings.ante);
+  const chipCurve = v => 2.6 * Math.pow(v / chipUnit(), 0.62);
+  const chipsFor = v => v > 0 ? Math.min(PILE_CAP, Math.max(1, Math.round(chipCurve(v)))) : 0;
+  const flightsFor = v => v > 0 ? Math.min(40, Math.max(2, Math.round(chipCurve(v)))) : 0;
+  // 지금 판돈에 맞추려면 테이블에 몇 개를 더 던져야 하는지
+  const chipsNeeded = () => Math.max(1, chipsFor(potTotal()) - world.count());
+
+  // ---- wake lock: 테이블에 놓아 둔 폰 화면이 꺼지지 않게 ----
+  let wakeLock = null;
+  async function requestWake() {
+    try {
+      if (wakeLock || !navigator.wakeLock || document.visibilityState !== 'visible' || state.phase === 'setup') return;
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) { wakeLock = null; }
+  }
+  document.addEventListener('visibilitychange', requestWake);
+
+  // ---- 전체화면: 웹 주소로 열었을 때 주소창을 숨기고 세로로 고정해요 ----
+  const isInstalled = () => !!(window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) || navigator.standalone === true;
+  const inFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const canFullscreen = () => !isInstalled() && !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  const isTouch = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  function goFullscreen() {
+    try {
+      const el = document.documentElement;
+      const p = !inFullscreen() && (el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen());
+      Promise.resolve(p).then(() => {
+        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('portrait').catch(() => {});
+      }, () => {});
+    } catch (e) { /* 이 환경에서는 전체화면을 쓸 수 없어요 */ }
+  }
+  function leaveFullscreen() {
+    try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) { /* 이미 끝남 */ }
+  }
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { if (state.phase !== 'setup') render(); }));
+
+  // ---- game flow ----
+  function startGame() {
+    const d = draft;
+    const names = d.names.map(n => String(n || '').trim());
+    const buyIn = toInt(d.buyIn), ante = toInt(d.ante), penalty = toInt(d.penalty);
+    let err = '';
+    if (!names[0] || !names[1]) err = '두 사람 이름을 모두 적어 주세요.';
+    else if (names[0] === names[1]) err = '두 사람 이름이 같아요. 구분되게 바꿔 주세요.';
+    else if (!buyIn) err = '시작 금액을 적어 주세요.';
+    else if (!ante) err = '기본 베팅을 적어 주세요.';
+    else if (ante > buyIn) err = '기본 베팅이 시작 금액보다 커요.';
+    d.error = err;
+    if (err) { save(); render(); return; }
+    if (canFullscreen() && isTouch()) goFullscreen();
+
+    state = blankState();
+    world.clear();
+    state.settings = { buyIn, ante, penalty, tie: d.tie };
+    state.players = names.map(name => ({ name, balance: buyIn, bought: buyIn, rebuys: 0, bet: 0, acted: false }));
+    state.phase = 'between';
+    addLog(`게임 시작 · ${names[0]}(아래) vs ${names[1]}(위), 각자 ${won(buyIn)}`);
+    startHand();
+    undoStack = [];
+    save(); render();
+    requestWake();
+  }
+
+  function startHand() {
+    const s = state;
+    if (s.players.some(p => p.balance <= 0)) { render(); return; }
+    pushUndo();
+    s.hand += 1;
+    s.result = null;
+    s.betMade = false;
+    s.lastAct = ['', ''];
+    s.first = 1 - s.first;
+    s.turn = s.first;
+    const ante = effAnte();
+    s.players.forEach(p => { p.balance -= ante; p.bet = ante; p.acted = false; });
+    s.currentBet = ante;
+    s.minRaise = s.settings.ante;
+    s.phase = 'betting';
+    ui = freshUi();
+    shownPot = s.carry; // 판돈 숫자가 이월금에서부터 올라가게
+    addLog(`${s.hand}번째 판 시작 · 기본 베팅 ${won(ante)}씩${s.carry ? ` · 이월 ${won(s.carry)}` : ''} · ${s.players[s.first].name} 선`);
+    pendingFx = () => {
+      const n = Math.max(2, chipsFor(potTotal()) - world.count()), a = Math.ceil(n / 2);
+      world.throwFrom(s.first, a, { onLand: fx.landed(false) });
+      world.throwFrom(1 - s.first, Math.max(1, n - a), { onLand: fx.landed(false) });
+    };
+    if (s.players.some(p => p.balance <= 0)) {
+      addLog('기본 베팅만으로 올인이라 바로 카드 공개');
+      toShowdown(true);
+      return;
+    }
+    save(); render();
+  }
+
+  function toShowdown(quiet) {
+    state.phase = 'showdown';
+    state.turn = -1;
+    ui = freshUi();
+    if (!quiet) addLog('베팅 끝 · 카드 공개');
+    save(); render();
+  }
+
+  function doCheck() {
+    const s = state, i = s.turn, p = cur(), o = other();
+    if (toCallOf(p) > 0) return;
+    pushUndo();
+    p.acted = true;
+    s.lastAct[i] = '체크';
+    addLog(`${p.name} 체크`);
+    pendingFx = () => fx.callout(i, '체크', false);
+    if (o.acted) { toShowdown(); return; }
+    s.turn = 1 - s.turn;
+    save(); render();
+  }
+  function doCall() {
+    const s = state, i = s.turn, p = cur();
+    pushUndo();
+    const pay = Math.min(toCallOf(p), p.balance);
+    const before = p.balance;
+    p.balance -= pay; p.bet += pay; p.acted = true;
+    s.lastAct[i] = `콜 ${shortWon(pay)}`;
+    addLog(`${p.name} 콜 ${won(pay)}${p.balance ? '' : ' · 올인'}`);
+    const big = !p.balance || pay >= before * 0.3;
+    const label = `${p.balance ? '콜' : '올인 콜'} ${shortWon(pay)}`;
+    pendingFx = () => {
+      fx.callout(i, label, big);
+      if (big) fx.flash();
+      world.throwFrom(i, chipsNeeded(), { big, onLand: fx.landed(big) });
+    };
+    toShowdown();
+  }
+  function doRaise(by, isAllIn) {
+    const s = state, i = s.turn, p = cur(), o = other();
+    const toCall = toCallOf(p);
+    const max = maxRaiseOf(p, o);
+    if (by <= 0 || by > max) return;
+    if (!isAllIn && by < s.minRaise) return;
+    pushUndo();
+    const pay = toCall + by;
+    const before = p.balance;
+    const word = s.betMade ? '레이즈' : '베팅';
+    p.balance -= pay; p.bet += pay; p.acted = true;
+    o.acted = false;
+    s.currentBet = p.bet;
+    s.minRaise = Math.max(s.minRaise, by);
+    s.betMade = true;
+    s.lastAct[i] = p.balance ? `${word} ${shortWon(by)}` : `올인 ${shortWon(pay)}`;
+    addLog(`${p.name} ${word} ${won(by)}${toCall ? ` (콜 ${won(toCall)} 포함 ${won(pay)} 냄)` : ''}${p.balance ? '' : ' · 올인'}`);
+    s.turn = 1 - s.turn;
+    const big = isAllIn || !p.balance || pay >= before * 0.3;
+    const label = !p.balance ? `올인! ${shortWon(pay)}` : `${word} +${shortWon(by)}`;
+    pendingFx = () => {
+      fx.callout(i, label, big);
+      if (big) fx.flash();
+      world.throwFrom(i, chipsNeeded(), { big, onLand: fx.landed(big) });
+    };
+    save(); render();
+  }
+  function doAllIn() { doRaise(maxRaiseOf(cur(), other()), true); }
+
+  function doFold(withTen) {
+    const s = state, i = s.turn, p = cur(), o = other();
+    pushUndo();
+    let pen = 0;
+    if (withTen && s.settings.penalty > 0) { pen = Math.min(s.settings.penalty, p.balance); p.balance -= pen; }
+    const pot = potTotal();
+    o.balance += pot + pen;
+    const nets = [0, 0];
+    nets[i] = -p.bet - pen;
+    nets[1 - i] = pot + pen - o.bet;
+    const cards = [null, null];
+    if (withTen) cards[i] = 10;
+    s.result = { hand: s.hand, kind: 'fold', winIdx: 1 - i, pot, pen, cards, nets };
+    addLog(pen ? `${p.name} 다이 · 10이라 벌금 ${won(pen)}` : `${p.name} 다이`);
+    addLog(`${o.name} 승 · ${won(pot + pen)} 가져감`);
+    s.carry = 0;
+    pendingFx = () => {
+      fx.callout(i, pen ? '다이 · 벌금' : '다이', false);
+      world.collect([1 - i], 250);
+      fx.glowHud(1 - i, 800);
+      setTimeout(() => fx.callout(1 - i, `+${shortWon(pot + pen)}`, true), 650);
+      if (pen) world.pass(i, 1 - i, Math.min(14, flightsFor(pen)), 500);
+    };
+    endHand();
+  }
+
+  function pickCard(i, v) {
+    if (state.phase !== 'showdown') return;
+    ui.cards[i] = v;
+    clearTimeout(resolveTimer);
+    render();
+    if (ui.cards[0] && ui.cards[1]) {
+      resolveTimer = setTimeout(() => { if (state.phase === 'showdown' && ui.cards[0] && ui.cards[1]) resolve(); }, 700);
+    }
+  }
+
+  function resolve() {
+    const s = state, [a, b] = s.players;
+    const ca = ui.cards[0], cb = ui.cards[1];
+    if (!ca || !cb) return;
+    pushUndo();
+    const pot = potTotal();
+    const gain = [0, 0];
+    let kind, winIdx = -1;
+    if (ca !== cb) {
+      winIdx = ca > cb ? 0 : 1;
+      gain[winIdx] = pot;
+      kind = 'win';
+      s.carry = 0;
+    } else if (s.settings.tie === 'carry') {
+      kind = 'carry';
+      s.carry = pot;
+    } else {
+      kind = 'split';
+      const half = Math.floor(pot / 2);
+      gain[s.first] = pot - half;
+      gain[1 - s.first] = half;
+      s.carry = 0;
+    }
+    s.players.forEach((p, i) => { p.balance += gain[i]; });
+    const nets = s.players.map((p, i) => gain[i] - p.bet);
+    s.result = { hand: s.hand, kind, winIdx, pot, pen: 0, cards: [ca, cb], nets };
+    addLog(`카드 공개 · ${a.name} ${ca} 대 ${cb} ${b.name}`);
+    if (kind === 'win') addLog(`${s.players[winIdx].name} 승 · 판돈 ${won(pot)} 가져감`);
+    else if (kind === 'carry') addLog(`동점 · 판돈 ${won(pot)} 다음 판으로 이월`);
+    else addLog(`동점 · 판돈 ${won(pot)} 반씩 나눔`);
+    const first = s.first;
+    if (kind === 'win') pendingFx = () => {
+      world.collect([winIdx], 200);
+      fx.glowHud(winIdx, 800);
+      setTimeout(() => fx.callout(winIdx, `승리 +${shortWon(pot)}`, true), 600);
+    };
+    else if (kind === 'split') pendingFx = () => {
+      world.collect([first, 1 - first], 200);
+      [first, 1 - first].forEach(k => { fx.glowHud(k, 800); setTimeout(() => fx.callout(k, `+${shortWon(gain[k])}`, false), 600); });
+    };
+    else pendingFx = () => {
+      fx.callout(0, '무승부 · 이월', false);
+      fx.callout(1, '무승부 · 이월', false);
+      fx.shockAt(window.innerWidth / 2, window.innerHeight / 2);
+      world.bump(90);
+    };
+    endHand();
+  }
+
+  function endHand() {
+    const s = state;
+    s.phase = 'between';
+    s.turn = -1;
+    s.players.forEach(p => { p.bet = 0; p.acted = false; });
+    const broke = s.players.find(p => p.balance <= 0);
+    if (broke) addLog(`${broke.name}의 돈이 다 떨어져서 게임 끝`);
+    ui = freshUi();
+    save(); render();
+  }
+
+  function rebuy(i) {
+    const s = state, p = s.players[i], amt = s.settings.buyIn;
+    if (s.phase !== 'between') return;
+    pushUndo();
+    p.balance += amt; p.bought += amt; p.rebuys = (p.rebuys || 0) + 1;
+    addLog(`${p.name} 충전 ${won(amt)}`);
+    ui.menu = false;
+    pendingFx = () => fx.callout(i, `충전 +${shortWon(amt)}`, false);
+    save(); render();
+  }
+
+  function newGame() {
+    if (state.players.length === 2 && state.settings) {
+      const st = state.settings;
+      draft = { names: freshNames(state.players.map(p => p.name)), buyIn: st.buyIn, ante: st.ante, penalty: st.penalty, penaltyTouched: true, tie: st.tie, error: '' };
+    }
+    clearTimeout(resolveTimer);
+    state = blankState();
+    world.clear();
+    undoStack = [];
+    ui = freshUi();
+    save(); render();
+    window.scrollTo(0, 0);
+  }
+
+  function pressKey(v) {
+    let str = ui.raise ? String(ui.raise) : '';
+    if (ui.keyFresh) { ui.keyFresh = false; str = ''; }
+    if (v === 'back') str = str.slice(0, -1);
+    else if (v === '000') { if (str) str += '000'; }
+    else str += v;
+    str = str.replace(/^0+/, '').slice(0, 12);
+    ui.raise = str ? Number(str) : 0;
+    render();
+  }
+
+  // ---- settlement ----
+  function settlement() {
+    const nets = state.players.map(p => ({ name: p.name, net: p.balance - p.bought }));
+    const [x, y] = nets;
+    let tx = null;
+    if (x.net > 0 && y.net < 0) tx = { from: y.name, to: x.name, amt: Math.min(x.net, -y.net) };
+    else if (y.net > 0 && x.net < 0) tx = { from: x.name, to: y.name, amt: Math.min(y.net, -x.net) };
+    return { nets, tx };
+  }
+  function settleText() {
+    const { nets, tx } = settlement();
+    const lines = [`인디언 포커 정산 · ${state.hand}번째 판까지`, ''];
+    lines.push(tx ? `${tx.from} → ${tx.to} ${won(tx.amt)}` : '주고받을 돈 없음');
+    lines.push('', nets.map(n => `${n.name} ${signed(n.net)}`).join(' / '));
+    if (state.carry) lines.push(`이월 판돈 ${won(state.carry)} 남음`);
+    return lines.join('\n');
+  }
+  function copySettlement() {
+    const text = settleText();
+    const done = () => {
+      ui.copied = true; ui.copyFallback = false; render();
+      setTimeout(() => { ui.copied = false; render(); }, 1600);
+    };
+    const fail = () => {
+      ui.copyFallback = true; render();
+      const ta = document.getElementById('copy-text');
+      if (ta) { ta.focus(); ta.select(); }
+    };
+    try { navigator.clipboard.writeText(text).then(done, fail); } catch (e) { fail(); }
+  }
+
+  // ---- chip physics ----
+  // 칩마다 위치·속도·높이를 갖고 실제로 굴러가요. 던지면 포물선으로 날아가 떨어지고, 테이블에서 미끄러지며
+  // 다른 칩을 밀어내요. 칩 위에 떨어지면 얹혀 탑이 되고, 세게 부딪히거나 테이블이 흔들리면 탑이 무너져요.
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const world = (() => {
+    const COLORS = [['#F06FAE', '#A93A76'], ['#A98BEA', '#6A4FB0'], ['#FFB3D4', '#CB7AA0'], ['#7E5BD6', '#4B3192']];
+    const G = 2600;          // 중력 (높이 px/s²)
+    const FRICTION = 1450;   // 테이블 마찰 (px/s²)
+    const K = 0.85;          // 높이가 화면 위쪽으로 보이는 비율
+    const TH = 4.2;          // 칩 두께
+    const MAX_STACK = 12, HARD_CAP = 180, GLANCE = 540;
+    let canvas = null, ctx = null, dpr = 1, R = 14, bounds = null;
+    let chips = [], sparks = [], queue = [];
+    let running = false, shown = false, last = 0, uid = 0, queuedThrows = 0;
+    let sprites = [], spriteKey = '';
+    const rnd = Math.random;
+    const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+
+    function ensure() {
+      if (ctx) return true;
+      canvas = document.getElementById('chips');
+      ctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+      return !!ctx;
+    }
+    function resize() {
+      if (!ensure()) return;
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.height = Math.round(window.innerHeight * dpr);
+      spriteKey = '';
+      measure();
+      if (bounds) chips.forEach(c => { if (!c.base) { c.x = clamp(c.x, bounds.l + R, bounds.r - R); c.y = clamp(c.y, bounds.t + R, bounds.b - R); } });
+      draw();
+    }
+    function measure() {
+      const felt = document.querySelector('.felt');
+      if (!felt) return false;
+      const r = felt.getBoundingClientRect();
+      if (!r.width) return false;
+      // 위아래 자리 표시줄 밑으로는 칩이 들어가지 않게
+      bounds = { l: r.left + 16, t: r.top + 84, r: r.right - 16, b: r.bottom - 84, cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+      R = clamp(r.width * 0.036, 11, 15);
+      buildSprites();
+      return true;
+    }
+    function buildSprites() {
+      const key = R.toFixed(1) + '@' + dpr;
+      if (key === spriteKey) return;
+      spriteKey = key;
+      sprites = COLORS.map(([face]) => {
+        const size = Math.ceil((R * 2 + 2) * dpr);
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = size;
+        const g = cv.getContext('2d'), m = size / 2;
+        g.fillStyle = face;
+        g.beginPath(); g.arc(m, m, R * dpr, 0, Math.PI * 2); g.fill();
+        const rr = (R - 1.8) * dpr, seg = (2 * Math.PI * rr) / 16;
+        g.strokeStyle = 'rgba(255, 255, 255, .92)'; g.lineWidth = 3 * dpr; g.setLineDash([seg, seg]);
+        g.beginPath(); g.arc(m, m, rr, 0, Math.PI * 2); g.stroke();
+        g.setLineDash([]); g.lineWidth = 1.4 * dpr; g.strokeStyle = 'rgba(255, 255, 255, .6)';
+        g.beginPath(); g.arc(m, m, R * 0.56 * dpr, 0, Math.PI * 2); g.stroke();
+        g.fillStyle = 'rgba(255, 255, 255, .14)';
+        g.beginPath(); g.arc(m, m, R * 0.42 * dpr, 0, Math.PI * 2); g.fill();
+        return cv;
+      });
+    }
+
+    const make = (x, y, z, extra) => Object.assign({ id: ++uid, x, y, z, pz: z, vx: 0, vy: 0, vz: 0, rot: rnd() * 6.283, vr: 0, c: (rnd() * 4) | 0, mode: 'air', base: null, stack: [], level: 0, ox: 0, oy: 0, alpha: 1, batch: null, ghost: false, bounced: false }, extra || {});
+    const isActive = c => c.mode !== 'collect' && c.mode !== 'vanish' && !c.ghost && !c.dead;
+    const active = () => chips.filter(isActive);
+    const topHeight = b => (b.stack.length + 1) * TH;
+    const topXY = b => { const t = b.stack[b.stack.length - 1]; return t ? { x: b.x + t.ox, y: b.y + t.oy } : { x: b.x, y: b.y }; };
+    function hudPoint(side) {
+      const el = document.querySelector(`.hud[data-p="${side}"] .hud-bal`);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
+    }
+    function spark(x, y, big) { sparks.push({ x, y, t: 0, life: big ? 0.45 : 0.32, big: !!big }); }
+    function firstLand(c, x, y) {
+      if (c.batch && !c.batch.done) { c.batch.done = true; if (c.batch.onLand) c.batch.onLand(x, y); }
+    }
+    function toAir(t, vx, vy, vz) {
+      t.mode = 'air'; t.base = null; t.level = 0; t.ox = t.oy = 0; t.stack = [];
+      t.pz = t.z; t.vx = vx; t.vy = vy; t.vz = vz; t.vr = (rnd() - 0.5) * 20; t.bounced = false;
+    }
+    // 탑에서 칩 하나(또는 몇 개)가 굴러떨어져요
+    function topple(b, dx, dy, speed) {
+      if (!b.stack.length) return;
+      const n = speed > 520 ? Math.min(b.stack.length, 1 + ((rnd() * 3) | 0)) : 1;
+      for (let k = 0; k < n; k++) {
+        const t = b.stack.pop();
+        t.x = b.x + t.ox; t.y = b.y + t.oy; t.z = t.level * TH;
+        toAir(t, b.vx + dx * speed * (0.45 + rnd() * 0.4) + (rnd() - 0.5) * 70, b.vy + dy * speed * (0.45 + rnd() * 0.4) + (rnd() - 0.5) * 70, 70 + rnd() * 130);
+      }
+    }
+    // 탑에서 빠지는 칩: 그 위에 얹힌 칩들은 떨어져요
+    function detach(c) {
+      if (c.base) {
+        const b = c.base, i = b.stack.indexOf(c);
+        if (i >= 0) {
+          b.stack.splice(i).forEach((t, k) => {
+            if (k === 0) return;
+            t.x = b.x + t.ox; t.y = b.y + t.oy; t.z = t.level * TH;
+            toAir(t, (rnd() - 0.5) * 60, (rnd() - 0.5) * 60, 0);
+          });
+        }
+        c.base = null;
+      }
+      if (c.stack.length) {
+        c.stack.forEach(t => { t.x = c.x + t.ox; t.y = c.y + t.oy; t.z = t.level * TH; toAir(t, (rnd() - 0.5) * 60, (rnd() - 0.5) * 60, 0); });
+        c.stack = [];
+      }
+    }
+    function nudge(b, vx, vy, k) {
+      const m = 1 + b.stack.length;
+      b.vx += vx * k / m; b.vy += vy * k / m;
+    }
+    function walls(c) {
+      if (!bounds) return;
+      if (c.x < bounds.l + R) { c.x = bounds.l + R; c.vx = Math.abs(c.vx) * 0.45; }
+      if (c.x > bounds.r - R) { c.x = bounds.r - R; c.vx = -Math.abs(c.vx) * 0.45; }
+      if (c.y < bounds.t + R) { c.y = bounds.t + R; c.vy = Math.abs(c.vy) * 0.45; }
+      if (c.y > bounds.b - R) { c.y = bounds.b - R; c.vy = -Math.abs(c.vy) * 0.45; }
+    }
+
+    function stepAir(c, dt) {
+      c.pz = c.z;
+      c.vz -= G * dt;
+      c.x += c.vx * dt; c.y += c.vy * dt; c.z += c.vz * dt; c.rot += c.vr * dt;
+      if (c.vz < 0) walls(c); // 손에서 떠난 직후(올라가는 중)에는 벽에 막히지 않아요
+      if (c.vz < 0) {
+        // 이번 순간에 어떤 탑의 꼭대기 높이를 지나쳤으면 그 위에 떨어진 거예요
+        let best = null, bh = -1, bd = 0, bt = null;
+        for (const b of chips) {
+          if (b.mode !== 'ground' || b === c) continue;
+          const h = topHeight(b);
+          if (c.pz >= h && c.z < h) {
+            const t = topXY(b), d = Math.hypot(c.x - t.x, c.y - t.y);
+            if (d < R * 1.75 && h > bh) { best = b; bh = h; bd = d; bt = t; }
+          }
+        }
+        if (best) {
+          const speed = Math.hypot(c.vx, c.vy);
+          const below = best.stack[best.stack.length - 1];
+          const ox = (below ? below.ox : 0) + clamp(c.x - bt.x, -R * 0.32, R * 0.32);
+          const oy = (below ? below.oy : 0) + clamp(c.y - bt.y, -R * 0.32, R * 0.32);
+          if (bd < R * 1.05 && best.stack.length + 1 < MAX_STACK && speed < GLANCE && Math.hypot(ox, oy) < R * 0.8 && !c.ghost) {
+            best.stack.push(c);
+            c.mode = 'stacked'; c.base = best; c.level = best.stack.length; c.ox = ox; c.oy = oy; c.z = c.level * TH;
+            nudge(best, c.vx, c.vy, 0.14);
+            c.vx = c.vy = c.vz = 0; c.vr = 0;
+            if (speed > 200) spark(bt.x, bt.y - bh * K, false);
+            firstLand(c, bt.x, bt.y - bh * K);
+            return;
+          }
+          // 가장자리에 걸리거나 너무 빨라서 미끄러져 떨어져요
+          const nx = bd > 0.01 ? (c.x - bt.x) / bd : rnd() - 0.5, ny = bd > 0.01 ? (c.y - bt.y) / bd : rnd() - 0.5;
+          c.x = bt.x + nx * R * 1.8; c.y = bt.y + ny * R * 1.8; c.z = bh;
+          c.vx = c.vx * 0.55 + nx * 150; c.vy = c.vy * 0.55 + ny * 150; c.vz = Math.abs(c.vz) * 0.12;
+          nudge(best, -nx * speed, -ny * speed, 0.22);
+          spark(bt.x, bt.y - bh * K, speed > 400);
+          if (speed > GLANCE * 0.8 && rnd() < 0.6) topple(best, -nx, -ny, speed);
+          firstLand(c, bt.x, bt.y - bh * K);
+          return;
+        }
+        if (c.z <= 0) {
+          c.z = 0;
+          const impact = -c.vz;
+          firstLand(c, c.x, c.y);
+          if (impact > 420 && !c.bounced) {
+            c.vz = impact * 0.22; c.bounced = true; c.vx *= 0.82; c.vy *= 0.82;
+            spark(c.x, c.y, impact > 700);
+          } else {
+            c.vz = 0; c.vr *= 0.5;
+            c.mode = c.ghost ? 'vanish' : 'ground';
+          }
+          return;
+        }
+      }
+      // 낮게 날아와 탑 옆구리에 부딪히면 튕겨 나오고 탑은 밀려요
+      for (const b of chips) {
+        if (b.mode !== 'ground' || b === c) continue;
+        if (c.z >= topHeight(b) - 1) continue;
+        const dx = c.x - b.x, dy = c.y - b.y, d = Math.hypot(dx, dy);
+        if (d < R * 1.9 && d > 0.01) {
+          const nx = dx / d, ny = dy / d, rel = c.vx * nx + c.vy * ny;
+          c.x = b.x + nx * R * 1.9; c.y = b.y + ny * R * 1.9;
+          if (rel < 0) {
+            c.vx -= 1.45 * rel * nx; c.vy -= 1.45 * rel * ny;
+            nudge(b, -rel * -nx, -rel * -ny, 0.6);
+            if (-rel > 300 && rnd() < 0.5) topple(b, -nx, -ny, -rel);
+            spark(c.x - nx * R, c.y - ny * R - c.z * K, -rel > 400);
+          }
+        }
+      }
+    }
+    function stepGround(c, dt) {
+      const sp = Math.hypot(c.vx, c.vy);
+      if (sp > 0) {
+        const dec = FRICTION * dt;
+        if (dec >= sp) { c.vx = 0; c.vy = 0; } else { const k = (sp - dec) / sp; c.vx *= k; c.vy *= k; }
+      }
+      c.x += c.vx * dt; c.y += c.vy * dt;
+      c.rot += c.vr * dt; c.vr *= Math.pow(0.04, dt);
+      walls(c);
+      // 빠르게 밀리는 탑은 꼭대기부터 흔들려 떨어져요
+      if (sp > 460 && c.stack.length > 1 && rnd() < dt * 5) topple(c, c.vx / sp, c.vy / sp, sp * 0.6);
+    }
+    function stepCollect(c, dt) {
+      c.t += dt;
+      const p = Math.min(1, c.t / c.dur);
+      const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      const perp = Math.sin(Math.PI * e) * c.bend;
+      c.x = c.sx + (c.tx - c.sx) * e + c.px * perp;
+      c.y = c.sy + (c.ty - c.sy) * e + c.py * perp;
+      c.z = c.sz * (1 - e) + Math.sin(Math.PI * e) * c.hop;
+      c.rot += c.vr * dt;
+      c.alpha = p > 0.82 ? (1 - p) / 0.18 : 1;
+      if (p >= 1) c.dead = true;
+    }
+    function resolve(a, b) {
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = R * 2;
+      if (d >= min) return;
+      if (d < 0.001) { b.x += 0.6; return; }
+      const nx = dx / d, ny = dy / d;
+      const ia = 1 / (1 + a.stack.length), ib = 1 / (1 + b.stack.length), sum = ia + ib, ov = min - d;
+      a.x -= nx * ov * ia / sum; a.y -= ny * ov * ia / sum;
+      b.x += nx * ov * ib / sum; b.y += ny * ov * ib / sum;
+      const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (rel < 0) {
+        const j = -(1 + 0.45) * rel / sum;
+        a.vx -= j * ia * nx; a.vy -= j * ia * ny;
+        b.vx += j * ib * nx; b.vy += j * ib * ny;
+        const imp = -rel;
+        a.vr += (rnd() - 0.5) * imp * 0.03; b.vr += (rnd() - 0.5) * imp * 0.03;
+        if (imp > 170) spark((a.x + b.x) / 2, (a.y + b.y) / 2, imp > 340);
+        if (imp > 300 && rnd() < 0.5) { topple(a, -nx, -ny, imp * 0.6); topple(b, nx, ny, imp * 0.6); }
+      }
+    }
+    function collide() {
+      const g = chips.filter(c => c.mode === 'ground');
+      if (g.length < 2) return;
+      const cell = R * 2, grid = new Map();
+      for (const c of g) {
+        const k = ((c.x / cell) | 0) * 4096 + ((c.y / cell) | 0);
+        let arr = grid.get(k);
+        if (!arr) grid.set(k, arr = []);
+        arr.push(c);
+      }
+      for (const a of g) {
+        const gx = (a.x / cell) | 0, gy = (a.y / cell) | 0;
+        for (let ix = -1; ix <= 1; ix++) for (let iy = -1; iy <= 1; iy++) {
+          const arr = grid.get((gx + ix) * 4096 + (gy + iy));
+          if (arr) for (const b of arr) if (b.id > a.id) resolve(a, b);
+        }
+      }
+    }
+    function step(dt) {
+      if (!bounds) return;
+      for (const c of chips) {
+        if (c.mode === 'air') stepAir(c, dt);
+        else if (c.mode === 'ground') stepGround(c, dt);
+        else if (c.mode === 'collect') stepCollect(c, dt);
+        else if (c.mode === 'vanish') { c.alpha -= dt * 3.5; c.z += dt * 50; if (c.alpha <= 0) c.dead = true; }
+      }
+      collide();
+      for (const c of chips) if (c.mode === 'stacked' && c.base) { c.x = c.base.x + c.ox; c.y = c.base.y + c.oy; c.z = c.level * TH; }
+      if (chips.some(c => c.dead)) chips = chips.filter(c => !c.dead);
+    }
+
+    const drawKey = c => (c.mode === 'air' || c.mode === 'collect') ? 1e5 + c.y + c.z : (c.mode === 'stacked' && c.base ? c.base.y + c.level * 0.01 : c.y);
+    function draw() {
+      if (!ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!shown || !sprites.length) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const list = chips.slice().sort((a, b) => drawKey(a) - drawKey(b));
+      ctx.fillStyle = 'rgba(8, 2, 20, .38)';
+      for (const c of list) if (c.mode === 'ground') { ctx.beginPath(); ctx.ellipse(c.x + 1.5, c.y + 5, R * 1.08, R * 0.95, 0, 0, 6.283); ctx.fill(); }
+      for (const c of list) {
+        const s = 1 + c.z * 0.0024, sx = c.x, sy = c.y - c.z * K;
+        ctx.globalAlpha = Math.max(0, Math.min(1, c.alpha));
+        if (c.mode !== 'ground' && c.mode !== 'stacked') {
+          const f = Math.max(0, 1 - c.z / 300), sr = R * (1 + c.z / 400);
+          ctx.fillStyle = `rgba(8, 2, 20, ${(0.34 * f).toFixed(3)})`;
+          ctx.beginPath(); ctx.ellipse(c.x + c.z * 0.08, c.y + 5, sr, sr * 0.9, 0, 0, 6.283); ctx.fill();
+        }
+        ctx.fillStyle = COLORS[c.c][1];
+        ctx.beginPath(); ctx.arc(sx, sy + 3.4 * s, R * s, 0, 6.283); ctx.fill();
+        const sp = sprites[c.c], size = (sp.width / dpr) * s;
+        ctx.save(); ctx.translate(sx, sy); ctx.rotate(c.rot); ctx.drawImage(sp, -size / 2, -size / 2, size, size); ctx.restore();
+      }
+      ctx.lineWidth = 1.6;
+      for (const sk of sparks) {
+        const p = sk.t / sk.life;
+        ctx.globalAlpha = (1 - p) * 0.9;
+        ctx.strokeStyle = '#FFD3EA';
+        ctx.beginPath(); ctx.arc(sk.x, sk.y, 3 + p * (sk.big ? 30 : 17), 0, 6.283); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function busy() {
+      if (queue.length || sparks.length) return true;
+      for (const c of chips) {
+        if (c.mode === 'air' || c.mode === 'collect' || c.mode === 'vanish') return true;
+        if (c.mode === 'ground' && (Math.abs(c.vx) > 2 || Math.abs(c.vy) > 2)) return true;
+      }
+      return false;
+    }
+    function frame(now) {
+      if (!running) return;
+      const dt = Math.min(0.034, Math.max(0.001, (now - last) / 1000));
+      last = now;
+      if (queue.length) {
+        const due = queue.filter(q => q.at <= now).sort((a, b) => a.at - b.at);
+        if (due.length) { queue = queue.filter(q => q.at > now); due.forEach(q => q.fn()); }
+      }
+      for (let i = 0; i < 3; i++) step(dt / 3);
+      sparks.forEach(sk => { sk.t += dt; });
+      sparks = sparks.filter(sk => sk.t < sk.life);
+      draw();
+      if (!busy()) { chips.forEach(c => { if (c.mode === 'ground') c.vx = c.vy = 0; }); running = false; return; }
+      requestAnimationFrame(frame);
+    }
+    function wake() {
+      if (running || !shown) return;
+      running = true;
+      last = performance.now();
+      requestAnimationFrame(frame);
+    }
+    function settle() {
+      for (let i = 0; i < 360 && busy(); i++) { step(1 / 120); sparks = []; }
+      chips.forEach(c => { if (c.mode === 'ground') c.vx = c.vy = 0; });
+      draw();
+    }
+
+    // 내 보유금 쪽에서 판돈 쪽으로 한 줌 던져요
+    function spawnThrow(side, batch, big) {
+      const src = hudPoint(side);
+      if (!src || !bounds) return;
+      const act = active();
+      const sx = src.x + (rnd() - 0.5) * Math.min(src.w, 120), sy = src.y + (rnd() - 0.5) * 8;
+      let tx, ty, h = 0, exact = false;
+      const bases = act.filter(c => c.mode === 'ground' && c.stack.length < MAX_STACK - 2);
+      if (bases.length && rnd() < Math.min(0.55, act.length / 28)) {
+        const b = bases[(rnd() * bases.length) | 0], t = topXY(b);
+        tx = t.x + gauss() * R * 0.35; ty = t.y + gauss() * R * 0.35; h = topHeight(b); exact = true;
+      } else {
+        const spread = Math.min(bounds.w * 0.3, 16 + Math.sqrt(act.length) * 7);
+        tx = bounds.cx + gauss() * spread * 0.8; ty = bounds.cy + gauss() * spread * 0.6;
+      }
+      tx = clamp(tx, bounds.l + R * 2, bounds.r - R * 2);
+      ty = clamp(ty, bounds.t + R * 2, bounds.b - R * 2);
+      const tf = (0.5 + rnd() * 0.22) * (big ? 0.85 : 1);
+      const dx = tx - sx, dy = ty - sy, D = Math.hypot(dx, dy) || 1;
+      const v = (exact ? 1 : 0.84) * (D / tf) * (big ? 1.14 : 1);
+      const z0 = 30;
+      chips.push(make(sx, sy, z0, { vx: (dx / D) * v, vy: (dy / D) * v, vz: (G * tf * tf / 2 + h - z0) / tf, vr: (rnd() - 0.5) * 26, batch, ghost: act.length >= HARD_CAP }));
+    }
+    function startCollect(c, dst) {
+      detach(c);
+      const ang = Math.atan2(dst.y - c.y, dst.x - c.x);
+      Object.assign(c, {
+        mode: 'collect', sx: c.x, sy: c.y, sz: c.z, tx: dst.x + (rnd() - 0.5) * 50, ty: dst.y + (rnd() - 0.5) * 10,
+        px: -Math.sin(ang), py: Math.cos(ang), bend: (rnd() - 0.5) * 110, hop: 130 + rnd() * 140,
+        t: 0, dur: 0.68 + rnd() * 0.32, vr: (rnd() - 0.5) * 24,
+      });
+    }
+
+    return {
+      show() { if (!ensure()) return; if (!shown) { shown = true; resize(); } else measure(); draw(); },
+      hide() { shown = false; running = false; queue = []; queuedThrows = 0; if (ctx) draw(); },
+      clear() { chips = []; sparks = []; queue = []; queuedThrows = 0; if (ctx) draw(); },
+      count: () => active().length + queuedThrows, // 아직 손에 있는(던질 차례를 기다리는) 칩도 셈해요
+      throwFrom(side, n, opts) {
+        opts = opts || {};
+        if (!shown || (!bounds && !measure())) return;
+        if (REDUCED) { this.sync(active().length + n, false); if (opts.onLand) opts.onLand(bounds.cx, bounds.cy); return; }
+        const batch = { done: false, onLand: opts.onLand };
+        const now = performance.now(), gap = opts.big ? 20 : 32;
+        queuedThrows += n;
+        for (let j = 0; j < n; j++) queue.push({ at: now + j * gap + rnd() * 18, fn: () => { queuedThrows = Math.max(0, queuedThrows - 1); spawnThrow(side, batch, !!opts.big); } });
+        wake();
+      },
+      // 판돈 칩이 이긴 사람 쪽으로 쓸려 가요 (위에 얹힌 칩부터)
+      collect(sides, delay) {
+        const act = active();
+        if (!act.length) return;
+        if (REDUCED) { act.forEach(detach); chips = chips.filter(c => !act.includes(c)); draw(); return; }
+        const order = act.slice().sort((a, b) => (b.z - a.z) || (rnd() - 0.5));
+        const now = performance.now() + (delay || 0), gap = Math.min(16, 900 / order.length);
+        order.forEach((c, idx) => {
+          const side = sides[idx % sides.length];
+          queue.push({ at: now + idx * gap + rnd() * 40, fn: () => { const dst = hudPoint(side); if (dst && !c.dead && c.mode !== 'collect') startCollect(c, dst); } });
+        });
+        wake();
+      },
+      // 한 사람에게서 다른 사람에게 바로 가는 돈 (10 벌금)
+      pass(from, to, n, delay) {
+        if (REDUCED) return;
+        const now = performance.now() + (delay || 0);
+        for (let j = 0; j < n; j++) queue.push({ at: now + j * 45, fn: () => { const a = hudPoint(from), b = hudPoint(to); if (!a || !b) return; const c = make(a.x + (rnd() - 0.5) * 40, a.y, 20); chips.push(c); startCollect(c, b); } });
+        wake();
+      },
+      // 테이블이 쿵 울려요: 칩이 튀고 탑이 무너져요
+      bump(s) {
+        if (REDUCED) return;
+        for (const c of chips.slice()) {
+          if (c.mode !== 'ground') continue;
+          c.vx += gauss() * s * 0.6; c.vy += gauss() * s * 0.6;
+          if (c.stack.length && rnd() < 0.45) topple(c, gauss() * 0.7, gauss() * 0.7, s * 1.5);
+          else if (!c.stack.length && rnd() < 0.35) { c.mode = 'air'; c.z = c.pz = 0.1; c.vz = 70 + rnd() * s * 0.7; c.bounced = true; }
+        }
+        wake();
+      },
+      // 되돌리기·새로고침 때 칩 개수를 판돈에 맞춰요
+      sync(target, animate) {
+        if (!shown || (!bounds && !measure())) return;
+        const act = active();
+        if (act.length > target) {
+          act.slice().sort((a, b) => (b.level - a.level) || (b.id - a.id)).slice(0, act.length - target).forEach(c => {
+            detach(c);
+            if (animate && !REDUCED) c.mode = 'vanish'; else c.dead = true;
+          });
+          chips = chips.filter(c => !c.dead);
+        } else if (act.length < target) {
+          for (let k = act.length; k < target; k++) {
+            const spread = Math.min(bounds.w * 0.3, 18 + Math.sqrt(k) * 7);
+            const x = clamp(bounds.cx + gauss() * spread * 0.8, bounds.l + R, bounds.r - R);
+            const y = clamp(bounds.cy + gauss() * spread * 0.6, bounds.t + R, bounds.b - R);
+            chips.push(make(x, y, animate ? 140 + rnd() * 160 : 20 + rnd() * 140, { vx: (rnd() - 0.5) * 40, vy: (rnd() - 0.5) * 40, vr: (rnd() - 0.5) * 8, bounced: !animate }));
+          }
+        }
+        if (!animate || REDUCED) settle();
+        wake();
+      },
+      shake() {
+        if (REDUCED || !canvas || !canvas.animate) return;
+        const frames = [
+          { transform: 'translate(0, 0)' }, { transform: 'translate(-7px, 3px)' }, { transform: 'translate(6px, -4px)' },
+          { transform: 'translate(-4px, 2px)' }, { transform: 'translate(3px, -1px)' }, { transform: 'translate(0, 0)' },
+        ];
+        canvas.animate(frames, { duration: 420, easing: 'ease-out' });
+        const felt = document.querySelector('.felt');
+        if (felt && felt.animate) felt.animate(frames, { duration: 420, easing: 'ease-out' });
+      },
+      resize,
+    };
+  })();
+  window.addEventListener('resize', () => { if (state.phase !== 'setup') world.resize(); });
+
+  // ---- effects ----
+  const fx = {
+    layer: () => document.getElementById('fx'),
+    hudEl: side => document.querySelector(`.hud[data-p="${side}"]`),
+    callout(side, text, big) {
+      const hud = fx.hudEl(side), layer = fx.layer();
+      if (REDUCED || !hud || !layer || !layer.animate) return;
+      const box = hud.getBoundingClientRect();
+      const el = document.createElement('span');
+      el.className = 'callout' + (big ? ' big' : '');
+      el.textContent = text;
+      el.style.left = (box.left + box.width / 2) + 'px';
+      el.style.top = (side ? box.bottom + 24 : box.top - 24) + 'px';
+      layer.appendChild(el);
+      const base = `translate(-50%, -50%)${side ? ' rotate(180deg)' : ''}`;
+      el.animate([
+        { transform: `${base} translateY(0) scale(.4)`, opacity: 0 },
+        { transform: `${base} translateY(-46px) scale(${big ? 1.3 : 1.1})`, opacity: 1, offset: 0.25 },
+        { transform: `${base} translateY(-80px) scale(1)`, opacity: 1, offset: 0.7 },
+        { transform: `${base} translateY(-120px) scale(.95)`, opacity: 0 },
+      ], { duration: big ? 1600 : 1200, easing: 'ease-out', fill: 'both' }).finished.then(() => el.remove(), () => el.remove());
+    },
+    shockAt(x, y) {
+      const layer = fx.layer();
+      if (REDUCED || !layer || !layer.animate) return;
+      const el = document.createElement('span');
+      el.className = 'shock';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      layer.appendChild(el);
+      el.animate([{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(4.5)', opacity: 0 }], { duration: 700, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'both' })
+        .finished.then(() => el.remove(), () => el.remove());
+    },
+    popPot() {
+      if (REDUCED) return;
+      document.querySelectorAll('.p-amt').forEach(el => {
+        if (el.animate) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)', filter: 'brightness(1.7)' }, { transform: 'scale(1)' }], { duration: 480, easing: 'ease-out' });
+      });
+    },
+    // 첫 칩이 떨어지는 순간: 충격파 + 판돈 숫자 튀기 (큰 베팅이면 테이블이 쿵)
+    landed(big) {
+      return (x, y) => {
+        fx.shockAt(x, y);
+        fx.popPot();
+        if (big) { world.shake(); world.bump(170); }
+      };
+    },
+    flash() {
+      const layer = fx.layer();
+      if (REDUCED || !layer || !layer.animate) return;
+      const fl = document.createElement('span');
+      fl.className = 'flash';
+      layer.appendChild(fl);
+      fl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], { duration: 700, fill: 'both' }).finished.then(() => fl.remove(), () => fl.remove());
+    },
+    glowHud(side, delay) {
+      const el = fx.hudEl(side);
+      if (REDUCED || !el || !el.animate) return;
+      el.animate([
+        { boxShadow: '0 0 0 rgba(255, 130, 200, 0)' },
+        { boxShadow: '0 0 0 2px rgba(255, 190, 225, .95), 0 0 40px rgba(255, 120, 190, .95)' },
+        { boxShadow: '0 0 0 rgba(255, 130, 200, 0)' },
+      ], { duration: 1100, delay, easing: 'ease-out' });
+    },
+    ripple(x, y) {
+      const layer = fx.layer();
+      if (REDUCED || !layer || !layer.animate) return;
+      const el = document.createElement('span');
+      el.className = 'ripple';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      layer.appendChild(el);
+      el.animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(5)', opacity: 0 }], { duration: 480, easing: 'ease-out', fill: 'both' })
+        .finished.then(() => el.remove(), () => el.remove());
+    },
+  };
+
+  function animatePot() {
+    const els = document.querySelectorAll('.pot-num');
+    if (!els.length) { shownPot = null; return; }
+    const to = Number(els[0].dataset.to);
+    const from = shownPot;
+    shownPot = to;
+    if (from === null || from === to || REDUCED) return;
+    const t0 = performance.now(), dur = 700;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      const v = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      document.querySelectorAll('.pot-num').forEach(el => { if (Number(el.dataset.to) === to) el.textContent = won(v); });
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // ---- views ----
+  const choice = (act, cls, title, desc, disabled, extra) =>
+    `<button class="act ${cls}" data-act="${act}" ${extra || ''} ${disabled ? 'disabled' : ''}><b>${title}</b>${desc ? `<small>${desc}</small>` : ''}</button>`;
+
+  function headerHTML() {
+    return `<div class="brand"><span class="brand-mark" aria-hidden="true">?</span><div><h1>인디언 포커 장부</h1><p>1대1 · 폰을 두 사람 사이에 놓고 해요.</p></div></div>`;
+  }
+
+  function moneyField(key, label, hint) {
+    return `<div class="field">
+      <label class="field-label" for="f-${key}">${label}</label>
+      <span class="field-input"><input class="text-in" id="f-${key}" type="number" inputmode="numeric" min="0" step="100" data-field="${key}" value="${toInt(draft[key])}"><span class="unit">원</span></span>
+      <span class="field-read" id="read-${key}">${hangulWon(draft[key])}</span>
+      <p class="hint">${hint}</p>
+    </div>`;
+  }
+
+  function setupHTML() {
+    const d = draft;
+    return `<section class="setup" aria-labelledby="h-setup">
+      <div class="setup-intro">
+        <h2 id="h-setup">새 게임</h2>
+        <p>폰을 두 사람 사이 테이블에 세로로 눕혀 놓아요. 폰 화면 전체가 포커 테이블이 되고, 내 차례가 오면 내 쪽에 베팅 화면이 홀로그램처럼 떠올라요.</p>
+      </div>
+      <div class="panel" role="group" aria-labelledby="h-names">
+        <h3 class="group-title" id="h-names">자리</h3>
+        <div class="phone-map">
+          <div class="seat-in"><label for="name-1"><b>위쪽</b>폰 위 끝에 앉는 사람</label><input class="text-in" id="name-1" data-field="name" data-i="1" value="${esc(d.names[1])}" maxlength="10" autocomplete="off"></div>
+          <div class="mini-phone" aria-hidden="true"><span>위</span><i></i><span>아래</span></div>
+          <div class="seat-in"><label for="name-0"><b>아래쪽</b>폰 아래 끝 · 첫 판 선</label><input class="text-in" id="name-0" data-field="name" data-i="0" value="${esc(d.names[0])}" maxlength="10" autocomplete="off"></div>
+        </div>
+        <p class="hint">선(먼저 고르는 사람)은 판마다 번갈아 가요. 폰의 화면 자동 회전은 꺼 두세요.</p>
+      </div>
+      <div class="panel rules" role="group" aria-labelledby="h-rules">
+        <h3 class="group-title" id="h-rules">돈 규칙</h3>
+        ${moneyField('buyIn', '시작 금액 (1인)', '각자 처음 갖고 시작하는 돈이에요. 다 잃으면 같은 금액으로 충전할 수 있어요.')}
+        ${moneyField('ante', '기본 베팅', '매 판 시작할 때 둘 다 내는 돈이에요. 베팅도 이 금액부터 할 수 있고, 테이블 칩 개수도 이 금액을 기준으로 쌓여요.')}
+        ${moneyField('penalty', '10 들고 다이 벌금', '10을 들고 다이하면 상대에게 주는 벌금이에요. 0원이면 이 규칙을 빼요. 더 지니어스 규칙은 기본 베팅의 10배예요.')}
+        <div class="field">
+          <span class="field-label" id="tie-label">숫자가 같을 때</span>
+          <div class="seg" role="radiogroup" aria-labelledby="tie-label">
+            <label><input type="radio" name="tie" id="tie-carry" value="carry" data-field="tie" ${d.tie === 'carry' ? 'checked' : ''}> 다음 판으로 이월</label>
+            <label><input type="radio" name="tie" id="tie-split" value="split" data-field="tie" ${d.tie === 'split' ? 'checked' : ''}> 반씩 나눠 갖기</label>
+          </div>
+        </div>
+      </div>
+      ${guideHTML(0)}
+      ${d.error ? `<p class="error" role="alert">${esc(d.error)}</p>` : ''}
+      <button class="btn btn-primary btn-big" data-act="start">게임 시작</button>
+      ${canFullscreen() && isTouch() ? '<p class="hint">게임을 시작하면 전체화면으로 바뀌고 세로로 고정돼요.</p>' : ''}
+    </section>`;
+  }
+
+  // ---- betting guide ----
+  function guideNames() {
+    if (state.phase !== 'setup') return state.players.map(p => p.name);
+    return draft.names.map((n, i) => String(n || '').trim() || (i ? 'B' : 'A'));
+  }
+  function guideHTML(step) {
+    const names = guideNames();
+    const inGame = state.phase !== 'setup';
+    const st = inGame ? state.settings : { ante: toInt(draft.ante), penalty: toInt(draft.penalty), tie: draft.tie };
+    const N = (i, a, b) => `<span data-name="${i}" data-j="${a ? a + ',' + b : ''}">${esc(a ? josa(names[i], a, b) : names[i])}</span>`;
+    const M = (key, val) => `<span data-money="${key}">${won(val)}</span>`;
+    const ante = st.ante, bet = st.ante * 4;
+    const tieText = st.tie === 'carry' ? '숫자가 같으면 판돈은 다음 판으로 넘어가요.' : '숫자가 같으면 판돈을 반씩 나눠요.';
+    const steps = [
+      ['기본 베팅', `두 사람이 ${M('ante', ante)}씩 판돈에 내요. 카드를 한 장씩 받아서, 내 카드는 보지 말고 이마에 대 상대에게만 보여 줘요.`],
+      ['선이 먼저 고르기', '선인 사람이 상대 카드를 보고 체크(더 안 걸고 넘기기)나 베팅(돈 더 걸기)을 골라요. 선은 판마다 번갈아 가요.'],
+      ['주고받기', '베팅을 받은 사람은 콜(똑같이 맞추기), 레이즈(맞추고 더 걸기), 다이(포기) 중에 골라요. 레이즈를 받으면 다시 상대가 골라요. 누군가 콜하거나 둘 다 체크하면 베팅이 끝나요.'],
+      ['카드 공개', `카드를 내려 각자 자기 숫자를 고르면, 높은 사람이 판돈을 다 가져가요. ${tieText} 누가 다이했으면 공개 없이 상대가 가져가요.`],
+      ['다음 판', '판돈 주인이 정해지면 다음 판을 시작해요. 한 사람의 돈이 다 떨어지면 게임이 끝나요.'],
+    ];
+    const odds = Array.from({ length: 10 }, (_, k) => {
+      const x = k + 1;
+      const pct = Math.round((2 * (10 - x)) / 19 * 100);
+      return `<div style="background: color-mix(in srgb, var(--pink) ${Math.round(pct * 0.6)}%, var(--surface-2))"><span class="o-card">${x}</span><span class="o-pct">${pct}%</span></div>`;
+    }).join('');
+    const showPenalty = !inGame || st.penalty > 0;
+
+    return `<details class="panel guide" id="guide" ${guideOpen ? 'open' : ''}>
+      <summary>
+        <span class="sum-text"><b>베팅 방법</b><span>순서 · 용어 · 예시 · 이길 확률</span></span>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 14 14" fill="none"><path d="M3 5.5 7 9.5 11 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </summary>
+      <div class="guide-body">
+        <section>
+          <h3>한 판의 흐름</h3>
+          <ol class="steps">${steps.map((x, i) => `<li class="${step === i + 1 ? 'is-now' : ''}"><div><div class="step-title">${x[0]}${step === i + 1 ? '<span class="now-chip">지금</span>' : ''}</div><p class="step-body">${x[1]}</p></div></li>`).join('')}</ol>
+        </section>
+        <section>
+          <h3>용어</h3>
+          <dl class="terms">
+            <dt>체크</dt><dd>돈을 더 걸지 않고 차례를 넘겨요. 아직 아무도 더 걸지 않았을 때만 할 수 있어요.</dd>
+            <dt>베팅</dt><dd>처음으로 돈을 더 거는 거예요. ${M('ante', ante)}부터 걸 수 있어요.</dd>
+            <dt>콜</dt><dd>상대가 더 건 만큼 똑같이 내요. 콜하면 베팅이 끝나고 카드를 공개해요.</dd>
+            <dt>레이즈</dt><dd>상대가 건 만큼 맞추고 그 위에 더 걸어요. 그러면 상대가 다시 골라야 해요.</dd>
+            <dt>다이</dt><dd>포기해요. 그때까지 낸 돈은 상대가 가져가지만, 더 잃지는 않아요.</dd>
+            <dt>올인</dt><dd>걸 수 있는 만큼 다 걸어요. 상대가 가진 돈보다 많이 걸 수는 없어요.</dd>
+            ${showPenalty ? `<dt>10 벌금</dt><dd>10을 들고 다이하면 벌금 ${M('penalty', st.penalty)}을 상대에게 줘요. 가장 높은 카드를 버린 대가예요.</dd>` : ''}
+          </dl>
+        </section>
+        <section>
+          <h3>예시 한 판</h3>
+          <div class="example">
+            <p>${N(0)}에게는 ${N(1)}의 <span class="ex-card">3</span>이, ${N(1)}에게는 ${N(0)}의 <span class="ex-card">9</span>가 보여요. 자기 카드는 둘 다 몰라요.</p>
+            <ol>
+              <li><b>${N(0)} (선)</b> 상대가 3이면 내가 이길 확률이 74%예요. ${M('bet', bet)} 베팅.</li>
+              <li><b>${N(1)}</b> 상대가 9면 내가 이길 확률이 11%뿐이에요. 다이.</li>
+            </ol>
+            <p>${N(0, '이', '가')} 판돈을 가져가요. ${N(1, '은', '는')} 기본 베팅 ${M('ante', ante)}만 잃어요. 만약 콜했다면 3 대 9로 져서 ${M('anteBet', ante + bet)}을 잃었을 거예요.</p>
+          </div>
+        </section>
+        <section>
+          <h3>판단 힌트 · 상대 카드별 내가 이길 확률</h3>
+          <div class="odds" aria-label="상대 카드가 1부터 10일 때 내 카드가 더 높을 확률">${odds}</div>
+          <p class="note">1~10 두 벌(20장)을 판마다 새로 섞는다고 보고 계산했어요. 같은 숫자가 나올 확률은 5%예요.</p>
+          <p class="tip">상대 카드가 낮을수록 베팅하고, 높을수록 다이를 생각해 보세요. 상대가 세게 걸면 내 카드가 낮다는 뜻일 수 있지만 블러핑일 수도 있어요.${showPenalty ? ' 10 벌금이 있어서, 상대가 세게 나온다고 무조건 다이하는 것도 위험해요.' : ''}</p>
+        </section>
+      </div>
+    </details>`;
+  }
+  function currentStep() {
+    const s = state;
+    if (s.phase === 'betting') {
+      const p = cur(), o = other();
+      return toCallOf(p) === 0 && !o.acted ? 2 : 3;
+    }
+    if (s.phase === 'showdown') return 4;
+    if (s.phase === 'between') return 5;
+    return 0;
+  }
+
+  // ---- board ----
+  function denoms() {
+    const { ante, buyIn } = state.settings;
+    const small = LADDER.filter(d => d >= ante / 2 && d <= Math.max(buyIn, ante)).slice(0, 4);
+    return [...new Set([...small, ...BIG])].sort((a, b) => a - b).slice(0, 8);
+  }
+
+  function hudHTML(i) {
+    const s = state, p = s.players[i], r = s.result;
+    const isTurn = s.phase === 'betting' && s.turn === i;
+    const isFirst = s.phase !== 'between' && s.first === i;
+    let face = '?';
+    if (s.phase === 'showdown' && ui.cards[i]) face = ui.cards[i];
+    if (s.phase === 'between' && r && r.cards && r.cards[i]) face = r.cards[i];
+    let sub;
+    if (s.phase === 'between') sub = `전체 ${signed(p.balance - p.bought)}`;
+    else if (s.phase === 'betting' && !isTurn) sub = `이번 판 ${shortWon(p.bet)} · ${s.lastAct[i] ? s.lastAct[i] : '대기 중'}`;
+    else sub = `이번 판 ${shortWon(p.bet)}`;
+    const tools = i === 0 ? `<div class="hud-tools">
+        <button data-act="undo" ${undoStack.length ? '' : 'disabled'} aria-label="마지막 행동 되돌리기"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 4.5 3.5 8.5l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 8.5h7.5a4.5 4.5 0 0 1 0 9H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button data-act="menu" aria-label="메뉴: 정산, 베팅 방법, 기록, 새 게임"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 6h12M4 10h12M4 14h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      </div>` : '';
+    return `<div class="hud ${i ? 'top' : 'bottom'} ${isTurn ? 'is-turn' : ''}" data-p="${i}" role="group" aria-label="${esc(p.name)} 자리 (${i ? '위쪽' : '아래쪽'})">
+      <span class="brow-card ${face === '?' ? '' : 'shown'}" aria-label="${face === '?' ? '내 카드 모름' : `카드 ${face}`}">${face}</span>
+      <div class="hud-main">
+        <div class="hud-name"><span class="n">${esc(p.name)}</span>${isFirst ? '<span class="tag">선</span>' : ''}${isTurn ? '<span class="tag tag-turn">내 차례</span>' : ''}</div>
+        <div class="hud-line"><span class="hud-bal">${won(p.balance)}</span><span class="hud-sub">${esc(sub)}</span></div>
+      </div>
+      ${tools}
+    </div>`;
+  }
+
+  function turnHTML(i) {
+    const s = state, p = s.players[i], o = s.players[1 - i];
+    const toCall = toCallOf(p), max = maxRaiseOf(p, o);
+    const key = `${s.hand}:${s.turn}:${s.currentBet}`;
+    if (ui.turnKey !== key) { ui.turnKey = key; ui.mode = 'main'; ui.raise = Math.min(s.minRaise, max); ui.keyFresh = true; }
+    if (ui.mode === 'fold') return foldHTML(p, o);
+    if (ui.mode === 'raise' && max > 0) return raiseHTML(p, o, toCall, max);
+
+    let say;
+    if (toCall > 0) say = `<b>${esc(iga(o.name))} ${shortWon(toCall)} 더 걸었어요.</b> ${max > 0 ? '맞출지(콜), 더 걸지(레이즈), 포기할지(다이) 골라요.' : '맞출지(콜), 포기할지(다이) 골라요.'}`;
+    else if (o.acted) say = `<b>${esc(iga(o.name))} 체크했어요.</b> 나도 체크하면 바로 카드를 공개해요. 이길 것 같으면 베팅하세요.`;
+    else say = `<b>내가 먼저예요.</b> ${esc(o.name)}의 카드를 보고, 이길 것 같으면 베팅, 자신 없으면 체크.`;
+
+    const primary = toCall > 0
+      ? choice('call', 'act-call', '콜', `${shortWon(toCall)}${toCall >= p.balance ? ' · 올인' : ''}`)
+      : choice('check', 'act-call', '체크', o.acted ? '바로 공개' : '넘기기');
+    const raise = max > 0 ? choice('raise-open', 'act-raise', s.betMade ? '레이즈' : '베팅', '금액 정하기 ›') : '';
+    const fold = choice('fold', 'act-fold', '다이', `${shortWon(p.bet)}만 잃기`);
+    return `<div class="h-top"><span class="h-eye">${esc(p.name)} · 내 차례</span><span class="h-pot">판돈 <b>${shortWon(potTotal())}</b></span></div><p class="h-say">${say}</p><div class="hacts ${max > 0 ? '' : 'two'}">${primary}${raise}${fold}</div>`;
+  }
+
+  function foldHTML(p, o) {
+    const pen = Math.min(state.settings.penalty, p.balance);
+    return `<div class="rp-top"><button class="hsmall" data-act="mode-main">‹ 뒤로</button><span class="h-eye">다이 확인</span></div>
+      <p class="h-say">이마의 카드를 확인하세요. <b>10이었다면</b> 가장 높은 카드를 버린 셈이라 벌금 ${eulReul(shortWon(pen))} ${esc(o.name)}에게 줘요.</p>
+      <div class="hacts two">
+        ${choice('fold-plain', 'act-quiet', '10 아님', `${shortWon(p.bet)}만 잃기`)}
+        ${choice('fold-ten', 'act-fold', '10 맞음', `벌금 ${shortWon(pen)}도 내기`)}
+      </div>`;
+  }
+
+  function raiseHTML(p, o, toCall, max) {
+    const s = state, raising = s.betMade, by = ui.raise;
+    const canBuild = max >= s.minRaise;
+    const ok = canBuild && by >= s.minRaise && by <= max;
+    const bad = canBuild && (by > max || by < s.minRaise);
+    let read;
+    if (!canBuild) read = `남은 돈이 최소 ${won(s.minRaise)}보다 적어서 올인만 할 수 있어요`;
+    else if (by > max) read = `최대 ${won(max)}까지 걸 수 있어요`;
+    else if (by < s.minRaise) read = `최소 ${won(s.minRaise)}부터 걸 수 있어요`;
+    else read = `${hangulWon(by)} · 최대 ${shortWon(max)}`;
+    const limitedByOpp = max < p.balance - toCall;
+    const pad = padMode === 'keys'
+      ? `<div class="keys">${['1', '2', '3', 'back', '4', '5', '6', '0', '7', '8', '9', '000'].map(k => `<button class="key${k === 'back' || k === '000' ? ' fn' : ''}" data-act="key" data-v="${k}" aria-label="${k === 'back' ? '한 글자 지우기' : k}">${k === 'back' ? '⌫' : k}</button>`).join('')}</div>`
+      : `<div class="denoms">${denoms().map(d => `<button class="denom ${denomShape(d)}" data-act="raise-add" data-v="${d}" ${by + d > max ? 'disabled' : ''} aria-label="${won(d)} 더하기">${denomLabel(d)}</button>`).join('')}</div>`;
+    return `<div class="rp-top">
+        <button class="hsmall" data-act="mode-main">‹ 뒤로</button>
+        <span class="h-eye">${raising ? '레이즈' : '베팅'}</span>
+        ${canBuild ? `<div class="modes" role="group" aria-label="금액 입력 방식"><button data-act="pad-mode" data-v="quick" aria-pressed="${padMode !== 'keys'}">돈 버튼</button><button data-act="pad-mode" data-v="keys" aria-pressed="${padMode === 'keys'}">숫자</button></div>` : ''}
+      </div>
+      ${canBuild ? `
+      <div class="rp-amt ${bad ? 'bad' : ''}"><button class="hsmall" data-act="raise-reset">최소</button><span class="rp-num"><span>+</span><output aria-live="polite">${fmt(by)}</output><span>원</span></span></div>
+      <div class="rp-read ${bad ? 'bad' : ''}">${read}</div>
+      ${pad}` : `<div class="rp-read">${read}</div>`}
+      <div class="hacts ${canBuild ? 'two' : 'one'}">
+        ${canBuild ? choice('raise', 'act-raise', raising ? '레이즈' : '베팅', raising ? `${shortWon(toCall + by)} 내기` : `${shortWon(by)} 걸기`, !ok) : ''}
+        ${choice('allin', 'act-allin', '올인', `${shortWon(toCall + max)}${limitedByOpp ? ` · ${esc(o.name)} 남은 돈까지` : ''}`)}
+      </div>`;
+  }
+
+  function pickHTML(i) {
+    const s = state, o = s.players[1 - i];
+    const mine = ui.cards[i], theirs = ui.cards[1 - i];
+    let hint;
+    if (!mine) hint = `판돈 ${won(potTotal())}이 걸려 있어요.`;
+    else if (!theirs) hint = `${esc(iga(o.name))} 고르길 기다려요. 잘못 눌렀으면 다시 고르세요.`;
+    else hint = '<b>결과를 확인하고 있어요…</b>';
+    return `<div class="h-eye">카드 공개</div>
+      <p class="h-say">이마의 카드를 내려 <b>내 숫자</b>를 골라요.</p>
+      <div class="cards" role="radiogroup" aria-label="${esc(s.players[i].name)} 카드">${Array.from({ length: 10 }, (_, k) => k + 1).map(n => `<button class="cardbtn${n === 10 ? ' ten' : ''}" role="radio" aria-checked="${mine === n}" data-act="card" data-i="${i}" data-v="${n}">${n}</button>`).join('')}</div>
+      <p class="h-hint">${hint}</p>`;
+  }
+
+  function resultHTML(i) {
+    const s = state, r = s.result, o = s.players[1 - i];
+    let out = '';
+    if (r) {
+      const isWin = r.winIdx === i, draw = r.winIdx < 0;
+      const big = draw ? '무승부' : isWin ? '승리!' : '패배';
+      let sub;
+      if (r.kind === 'fold') sub = isWin ? `${o.name} 다이${r.pen ? ` · 10 벌금 ${shortWon(r.pen)} 받음` : ''}` : `다이했어요${r.pen ? ` · 10이라 벌금 ${shortWon(r.pen)}` : ''}`;
+      else if (r.kind === 'win') sub = `내 카드 ${r.cards[i]} · ${o.name} 카드 ${r.cards[1 - i]}`;
+      else if (r.kind === 'carry') sub = `둘 다 ${r.cards[0]} · 판돈은 다음 판으로 넘어가요`;
+      else sub = `둘 다 ${r.cards[0]} · 판돈을 반씩 나눴어요`;
+      out += `<div class="h-eye">${r.hand}번째 판 결과</div><div class="res ${isWin ? 'is-win' : ''}">
+        <span class="res-big">${big}</span>
+        <span class="res-net ${r.nets[i] > 0 ? 'up' : r.nets[i] < 0 ? 'down' : ''}">${signed(r.nets[i])}</span>
+        <span class="res-sub">${esc(sub)}</span>
+      </div>`;
+    }
+    const broke = s.players.findIndex(q => q.balance <= 0);
+    if (broke === i) {
+      out += `<p class="h-hint">돈이 다 떨어졌어요. 충전하면 이어서 할 수 있어요.</p>
+        <div class="hacts two">${choice('rebuy', 'act-call', '충전하고 계속', `+${shortWon(s.settings.buyIn)}`, false, `data-i="${i}"`)}${choice('menu', 'act-quiet', '정산 보기', '게임 끝내기')}</div>`;
+    } else if (broke >= 0) {
+      out += `<p class="h-hint"><b>최종 승리!</b> ${esc(o.name)}의 돈이 다 떨어졌어요.</p>
+        <div class="hacts one">${choice('menu', 'act-quiet', '정산 보기', '누가 얼마 보낼지 확인')}</div>`;
+    } else {
+      const nextFirst = s.players[1 - s.first];
+      out += `<div class="hacts one">${choice('next', 'act-call', `${s.hand + 1}번째 판 시작`, `${esc(nextFirst.name)} 선 · 기본 ${shortWon(effAnte())}씩`)}</div>`;
+    }
+    return out;
+  }
+
+  function holoFor(i) {
+    const s = state;
+    if (s.phase === 'betting') return s.turn === i ? turnHTML(i) : '';
+    if (s.phase === 'showdown') return pickHTML(i);
+    return resultHTML(i);
+  }
+
+  function potLabelHTML() {
+    const s = state, [a, b] = s.players, r = s.result;
+    let pot, label, meta = '';
+    if (s.phase === 'between') {
+      if (s.carry) { pot = s.carry; label = '다음 판 이월'; meta = '동점이라 다음 판으로 넘어가요'; }
+      else {
+        pot = r ? r.pot + (r.pen || 0) : 0;
+        label = `${s.hand}번째 판 판돈`;
+        meta = r ? (r.winIdx >= 0 ? `${s.players[r.winIdx].name} 가져감` : '반씩 나눔') : '';
+      }
+    } else {
+      pot = potTotal();
+      label = `${s.hand}번째 판 판돈`;
+      meta = `${a.name} ${shortWon(a.bet)} · ${b.name} ${shortWon(b.bet)}${s.carry ? ` · 이월 ${shortWon(s.carry)}` : ''}`;
+    }
+    return `<span class="p-eye">${label}</span><b class="p-amt pot-num" data-to="${pot}">${won(pot)}</b>${meta ? `<span class="p-meta">${esc(meta)}</span>` : ''}`;
+  }
+
+  function sheetHTML() {
+    const s = state, st = s.settings;
+    return `<div class="sheet-back" data-act="menu-close"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="sheet-head"><h2 id="sheet-title">메뉴</h2><button class="btn" data-act="menu-close">닫기</button></div>
+        <div class="sheet-body" id="sheet-body">
+          <section class="panel settle" aria-labelledby="h-settle">${settleHTML()}</section>
+          ${guideHTML(currentStep())}
+          <section class="panel logp" aria-labelledby="h-log">${logHTML()}</section>
+          <section class="panel" aria-labelledby="h-game">
+            <h2 id="h-game">게임</h2>
+            <p class="note">${esc(s.players[0].name)}(아래) vs ${esc(s.players[1].name)}(위) · 시작 ${won(st.buyIn)} · 기본 ${won(st.ante)}${st.penalty ? ` · 10 벌금 ${won(st.penalty)}` : ''} · 동점 ${st.tie === 'carry' ? '이월' : '나눔'}</p>
+            <div class="row2">
+              <button class="btn" data-act="undo" ${undoStack.length ? '' : 'disabled'}>되돌리기</button>
+              <button class="btn" data-act="reset-ask">새 게임</button>
+            </div>
+            ${canFullscreen() ? (inFullscreen()
+              ? '<button class="btn" data-act="exit-fullscreen">전체화면 끝내기</button>'
+              : '<button class="btn btn-primary" data-act="fullscreen">전체화면으로 보기</button>') : ''}
+            ${ui.confirmReset ? `<div class="confirm" role="alert">
+              <p>지금 장부를 지우고 새 게임을 만들까요? 기록은 되돌릴 수 없어요.</p>
+              <div class="row2"><button class="btn" data-act="reset-cancel">취소</button><button class="btn btn-danger" data-act="reset-go">지우고 새로 시작</button></div>
+            </div>` : ''}
+          </section>
+        </div>
+      </div>`;
+  }
+
+  function settleHTML() {
+    const s = state;
+    const { nets, tx } = settlement();
+    const between = s.phase === 'between';
+    return `<h2 id="h-settle">정산 <button class="mini" data-act="copy" ${between ? '' : 'disabled'}>${ui.copied ? '복사됨' : '정산 복사'}</button></h2>
+      ${between ? '' : `<p class="note">${s.hand}번째 판이 진행 중이라 판에 걸린 돈은 빠져 있어요. 판이 끝난 뒤 정산하세요.</p>`}
+      ${tx
+        ? `<div class="tx-big"><span class="tx-from">${esc(tx.from)}</span><span class="tx-arrow" aria-label="에게">→</span><span class="tx-to">${esc(tx.to)}</span><span class="tx-amt">${won(tx.amt)}</span></div>`
+        : '<p class="empty">아직 주고받을 돈이 없어요.</p>'}
+      <ul class="nets">${s.players.map((p, i) => `<li>
+        <span class="n-name">${esc(p.name)}</span>
+        <span class="n-net ${nets[i].net > 0 ? 'up' : nets[i].net < 0 ? 'down' : ''}">${signed(nets[i].net)}</span>
+        <span class="n-detail">넣은 돈 ${won(p.bought)}${p.rebuys ? ` (충전 ${p.rebuys}회)` : ''} · 지금 ${won(p.balance)}</span>
+      </li>`).join('')}</ul>
+      ${s.carry ? `<p class="note">이월 판돈 ${eunNeun(won(s.carry))} 아직 주인이 없어요. 한 판 더 해서 정하세요.</p>` : ''}
+      ${ui.copyFallback ? `<textarea id="copy-text" readonly rows="6" aria-label="정산 내용">${esc(settleText())}</textarea><p class="note">자동 복사가 막혀 있어요. 위 글을 선택해서 복사하세요.</p>` : ''}
+      <p class="fine">이 장부는 금액만 계산해요. 실제 돈은 게임이 끝난 뒤 정산 결과대로 직접 주고받으세요.</p>`;
+  }
+
+  function logHTML() {
+    let lastH = null;
+    const items = state.log.slice().reverse().slice(0, 200).map(e => {
+      const fresh = e.h !== lastH;
+      lastH = e.h;
+      return `<li class="${fresh ? 'new-hand' : ''}"><span class="log-h">${fresh && e.h ? e.h + '번째' : ''}</span><span>${esc(e.t)}</span></li>`;
+    }).join('');
+    return `<h2 id="h-log">기록 <span class="h-meta">최근 것부터</span></h2><ol class="log">${items}</ol>`;
+  }
+
+  function boardHTML() {
+    const s = state;
+    let holos = '';
+    [1, 0].forEach(i => {
+      const content = holoFor(i);
+      const key = content ? `${s.phase}|${s.hand}|${s.turn}|${s.phase === 'betting' ? ui.mode : ''}` : '';
+      const enter = content && key !== lastHolo[i];
+      lastHolo[i] = key;
+      if (!content) return;
+      const side = i ? 'top' : 'bottom';
+      holos += `<div class="beam ${side}" aria-hidden="true"></div>
+        <div class="holo-slot ${side}"><section class="holo${enter ? ' enter' : ''}" id="holo-${i}" data-p="${i}" aria-label="${esc(s.players[i].name)} 베팅 화면">${content}</section></div>`;
+    });
+    return `<div class="board">
+      <div class="felt"></div>
+      <div class="p-label top" aria-hidden="true">${potLabelHTML()}</div>
+      <div class="p-label bot">${potLabelHTML()}</div>
+      ${holos}
+      ${hudHTML(1)}
+      ${hudHTML(0)}
+    </div>${ui.menu ? sheetHTML() : ''}`;
+  }
+
+  function render() {
+    const app = document.getElementById('app');
+    const table = state.phase !== 'setup';
+    document.documentElement.classList.toggle('table-mode', table);
+    const ae = document.activeElement;
+    let sel = null;
+    if (ae && ae !== document.body && app.contains(ae)) {
+      if (ae.id) sel = '#' + CSS.escape(ae.id);
+      else if (ae.dataset && ae.dataset.act) {
+        sel = `[data-act="${ae.dataset.act}"]`;
+        if (ae.dataset.i) sel += `[data-i="${ae.dataset.i}"]`;
+        if (ae.dataset.v) sel += `[data-v="${ae.dataset.v}"]`;
+      }
+    }
+    const scrolls = {};
+    ['holo-0', 'holo-1', 'sheet-body'].forEach(id => { const el = document.getElementById(id); if (el) scrolls[id] = el.scrollTop; });
+
+    document.getElementById('top').innerHTML = table ? '' : headerHTML();
+    document.getElementById('main').innerHTML = table ? boardHTML() : setupHTML();
+    if (table) world.show(); else world.hide();
+
+    Object.keys(scrolls).forEach(id => { const el = document.getElementById(id); if (el) el.scrollTop = scrolls[id]; });
+    if (sel) {
+      const el = document.querySelector(sel);
+      if (el && !el.disabled) el.focus({ preventScroll: true });
+    }
+    animatePot();
+    if (pendingFx) {
+      const f = pendingFx;
+      pendingFx = null;
+      requestAnimationFrame(() => { try { f(); } catch (e) { /* effects are decoration only */ } });
+    }
+  }
+
+  // ---- events ----
+  const actions = {
+    start: startGame,
+    check: doCheck,
+    call: doCall,
+    'raise-open': () => { ui.mode = 'raise'; ui.keyFresh = true; render(); },
+    'mode-main': () => { ui.mode = 'main'; render(); },
+    raise: () => doRaise(ui.raise, false),
+    allin: doAllIn,
+    fold: () => { if (state.settings.penalty > 0) { ui.mode = 'fold'; render(); } else doFold(false); },
+    'fold-plain': () => doFold(false),
+    'fold-ten': () => doFold(true),
+    'raise-add': b => { ui.raise += Number(b.dataset.v); ui.keyFresh = true; render(); },
+    'raise-reset': () => { ui.raise = Math.min(state.minRaise, maxRaiseOf(cur(), other())); ui.keyFresh = true; render(); },
+    'pad-mode': b => {
+      padMode = b.dataset.v === 'keys' ? 'keys' : 'quick';
+      ui.keyFresh = true;
+      try { localStorage.setItem(PAD_KEY, padMode); } catch (e) { /* storage unavailable */ }
+      render();
+    },
+    key: b => pressKey(b.dataset.v),
+    card: b => pickCard(Number(b.dataset.i), Number(b.dataset.v)),
+    next: startHand,
+    rebuy: b => rebuy(Number(b.dataset.i)),
+    menu: () => { ui.menu = true; render(); },
+    'menu-close': () => { ui.menu = false; ui.confirmReset = false; render(); },
+    copy: copySettlement,
+    undo,
+    'reset-ask': () => { ui.confirmReset = true; render(); },
+    'reset-cancel': () => { ui.confirmReset = false; render(); },
+    'reset-go': newGame,
+    fullscreen: () => { ui.menu = false; goFullscreen(); render(); },
+    'exit-fullscreen': () => { ui.menu = false; leaveFullscreen(); render(); },
+  };
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b || b.disabled) return;
+    const fn = actions[b.dataset.act];
+    if (fn) fn(b);
+  });
+
+  // 홀로그램 버튼을 누르면 손끝에서 빛이 퍼져요
+  document.addEventListener('pointerdown', e => {
+    const b = e.target.closest('.holo button, .hud-tools button');
+    if (b && !b.disabled) fx.ripple(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ui.menu) { ui.menu = false; ui.confirmReset = false; render(); }
+  });
+
+  function syncGuideText() {
+    const names = guideNames();
+    document.querySelectorAll('[data-name]').forEach(el => {
+      const i = Number(el.dataset.name);
+      const j = el.dataset.j ? el.dataset.j.split(',') : null;
+      el.textContent = j ? josa(names[i], j[0], j[1]) : names[i];
+    });
+    const ante = toInt(draft.ante);
+    const vals = { ante: won(ante), bet: won(ante * 4), anteBet: won(ante * 5), penalty: won(toInt(draft.penalty)) };
+    document.querySelectorAll('[data-money]').forEach(el => { el.textContent = vals[el.dataset.money]; });
+  }
+
+  document.addEventListener('input', e => {
+    const t = e.target;
+    const f = t.dataset && t.dataset.field;
+    if (!f || state.phase !== 'setup') return;
+    if (f === 'name') { draft.names[Number(t.dataset.i)] = t.value; syncGuideText(); save(); return; }
+    if (f === 'tie') return;
+    const v = toInt(t.value);
+    draft[f] = v;
+    const read = document.getElementById(`read-${f}`);
+    if (read) read.textContent = hangulWon(v);
+    if (f === 'penalty') draft.penaltyTouched = true;
+    if (f === 'ante' && !draft.penaltyTouched) {
+      draft.penalty = v * 10;
+      const pi = document.getElementById('f-penalty');
+      if (pi) pi.value = draft.penalty;
+      const pr = document.getElementById('read-penalty');
+      if (pr) pr.textContent = hangulWon(draft.penalty);
+    }
+    syncGuideText();
+    save();
+  });
+
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.dataset && t.dataset.field === 'tie' && state.phase === 'setup') { draft.tie = t.value; save(); render(); }
+  });
+
+  document.addEventListener('toggle', e => {
+    if (e.target.id !== 'guide') return;
+    guideOpen = e.target.open;
+    try { localStorage.setItem(PREF_KEY, guideOpen ? '1' : '0'); } catch (err) { /* storage unavailable */ }
+  }, true);
+
+  // ---- boot ----
+  function adopt(saved) {
+    if (!saved || !saved.state || saved.state.v !== 2) return false;
+    state = saved.state;
+    if (!state.lastAct) state.lastAct = ['', ''];
+    undoStack = Array.isArray(saved.undo) ? saved.undo : [];
+    draft = Object.assign(defaultDraft(), saved.draft || {});
+    draft.names = freshNames(draft.names);
+    return true;
+  }
+  function start(data) {
+    if (!adopt(data) && !adopt(load())) {
+      const d = data && data.draft;
+      if (d) {
+        draft = Object.assign(defaultDraft(), d);
+        draft.names = freshNames([0, 1].map(i => (d.names && d.names[i]) || defaultDraft().names[i]));
+      }
+    }
+    render();
+    // 이어서 할 때는 판돈만큼의 칩을 테이블에 바로 깔아 둬요
+    if (state.phase !== 'setup' && state.settings) world.sync(chipsFor(potTotal()), false);
+    requestWake();
+  }
+  window.claude?.hot?.snapshot?.(() => ({ state, undo: undoStack, draft }));
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+</script>
+</body>
+</html>
